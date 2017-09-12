@@ -114,7 +114,7 @@ public class RequestFlowHandlerService {
             secondTimes, minuteTimes, hourTimes, dayTimes,
             requestFlow.getSecondTimes(), requestFlow.getMinuteTimes(), requestFlow.getHourTimes(), requestFlow.getDayTimes()
           );
-          throw new TooManyRequestsException("too many exception.");
+          throw new TooManyRequestsException("too many requests exception.");
         }
       } else {
         requestFlow = new RequestFlow();
