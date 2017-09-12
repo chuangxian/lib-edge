@@ -49,6 +49,7 @@ public class PrometheusRequestInterceptor extends HandlerInterceptorAdapter {
   }
 
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    if ("OPTIONS".equals(request.getMethod())) return true;
     httpRequestDomain = new HttpRequestDomain();
     startTime = System.currentTimeMillis();
     HttpSession session = request.getSession();
