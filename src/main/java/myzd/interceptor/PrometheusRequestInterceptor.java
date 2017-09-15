@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import myzd.annotations.RequestFlowHandle;
 import myzd.domain.HttpRequestDomain;
+import myzd.domain.visitlog.TemplateEnum;
 import myzd.services.impl.RequestFlowHandlerService;
 import myzd.services.impl.TransferKafkaService;
 import myzd.utils.RequestHelper;
@@ -16,8 +17,10 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by zks on 2017/9/4.
@@ -40,48 +43,49 @@ public class PrometheusRequestInterceptor extends HandlerInterceptorAdapter {
   @Autowired
   private Environment env;
   private HttpRequestDomain httpRequestDomain;
+  private Map<String, Object> contentMap;
+  private String messageSource;
+  private String format;
+  private String serviceName;
+  private String edgeLogTopic;
 
   public PrometheusRequestInterceptor(TransferKafkaService transferKafkaService, ObjectMapper objectMapper, Environment env, RequestFlowHandlerService requestFlowHandlerService) {
     this.transferKafkaService = transferKafkaService;
     this.objectMapper = objectMapper;
     this.env = env;
     this.requestFlowHandlerService = requestFlowHandlerService;
+    this.messageSource = this.env.getProperty("message.source");
+    this.format = this.env.getProperty("log.access.format");
+    this.serviceName = this.env.getProperty("application.name");
+    this.edgeLogTopic = this.env.getProperty("edge.gateway.topic.log");
   }
 
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
     if ("OPTIONS".equals(request.getMethod())) return true;
     httpRequestDomain = new HttpRequestDomain();
+    contentMap = new LinkedHashMap<>();
     startTime = System.currentTimeMillis();
     HttpSession session = request.getSession();
-    Random random = new Random();
     request.getContextPath();
-    String apiRequestTime = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date());
     String clientIpAddr = RequestHelper.getRealIp(request);
     String requestUrl = String.valueOf(request.getRequestURL());
     String requestUri = request.getRequestURI();
     String requestMethod = request.getMethod();
-    List<String> paras = new ArrayList<>();
-    String requestId = String.valueOf(requestUri.hashCode());
-    String responseBody = String.valueOf((Math.abs(random.nextInt() % 100)));
-    Map<String, String[]> parameters = request.getParameterMap();
-    for (Map.Entry<String, String[]> entry : parameters.entrySet()) {
-      paras.add(entry.getKey() + " " + Arrays.toString(entry.getValue()));
-    }
-    String stringOfParas = "";
-    for (String para : paras) {
-      stringOfParas = stringOfParas + " " + para + " ";
-    }
-    stringOfParas = stringOfParas.substring(0, stringOfParas.length());
-    httpRequestDomain.setRequestId(requestId);
+    int size = 0;
+    int responseStatus = response.getStatus();
     httpRequestDomain.setRemoteAddr(clientIpAddr);
-    httpRequestDomain.setRequestTime(apiRequestTime);
     httpRequestDomain.setRequestUrl(requestUrl);
     httpRequestDomain.setRequestUri(requestUri);
     httpRequestDomain.setRequestMethod(requestMethod);
-    httpRequestDomain.setParameter(stringOfParas);
-    httpRequestDomain.setResponseBody(responseBody);
     httpRequestDomain.setTimestamp(startTime);
     httpRequestDomain.setSessionId(session.getId());
+    contentMap.put(TemplateEnum.MESSAGE_SOURCE, messageSource);
+    contentMap.put(TemplateEnum.REMOTE_HOST, clientIpAddr);
+    contentMap.put(TemplateEnum.REQUEST_METHOD, requestMethod);
+    contentMap.put(TemplateEnum.RESPONSE_STATUS, responseStatus);
+    contentMap.put(TemplateEnum.RESPONSE_BODY_SIZE, size);
+    contentMap.put(TemplateEnum.REQUEST_URI, requestUri);
+    contentMap.put(TemplateEnum.SERVICE_NAME, serviceName);
     HandlerMethod handlerMethod = HandlerMethod.class.cast(handler);
     if (handlerMethod.hasMethodAnnotation(RequestFlowHandle.class)) {
       RequestFlowHandle requestFlowHandle = handlerMethod.getMethodAnnotation(RequestFlowHandle.class);
@@ -96,8 +100,15 @@ public class PrometheusRequestInterceptor extends HandlerInterceptorAdapter {
   public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception arg3) throws Exception {
     if ("OPTIONS".equals(request.getMethod())) return;
     long endTime = System.currentTimeMillis();
-    String responseTime = String.valueOf(endTime - startTime);
-    httpRequestDomain.setResponseTime(responseTime);
-    transferKafkaService.sendMessage(env.getProperty("edge.gateway.topic.log"), objectMapper.writeValueAsString(httpRequestDomain));
+    String responseTime = String.valueOf((double) (endTime - startTime) / 1000);
+    contentMap.put(TemplateEnum.RESPONSE_TIME, responseTime);
+    List<String> keyList = Arrays.asList(format.split("\\|"));
+    StringBuilder message = new StringBuilder();
+    for (String key : keyList) {
+      log.debug(key);
+      message.append("|");
+      message.append(contentMap.get(key));
+    }
+    transferKafkaService.sendMessage(edgeLogTopic, String.valueOf(message).substring(1));
   }
 }

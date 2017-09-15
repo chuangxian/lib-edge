@@ -20,6 +20,6 @@ Add it in your root build.gradle at the end of repositories:
 
 ```groovy
 	dependencies {
-	        compile 'com.github.zhangkesheng:edge-gateway:5db2f5c4be'
+	        compile 'com.github.chuangxian.lib-edge:5db2f5c4be'
 	}
 ```
