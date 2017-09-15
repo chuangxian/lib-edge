@@ -27,8 +27,6 @@ public class TransferKafkaService {
   private KafkaTemplate<String, String> kafkaTemplate;
   @Autowired
   private ObjectMapper objectMapper;
-  @Autowired
-  private PrometheusEventHandler prometheusEventHandler;
 
   public void sendMessage(String topic, String message) throws IOException {
     log.debug("send kafka message. topic: {}, message: {}, date: {}", topic, message, new Date());
@@ -53,11 +51,6 @@ public class TransferKafkaService {
       log.error("Unexpected parsing error when writing kafka message to message queue.", e);
     } catch (NullPointerException e) {
       log.error("send kafka message error.", e);
-    }
-    try {
-      prometheusEventHandler.handle(message);
-    } catch (IOException e) {
-      e.printStackTrace();
     }
   }
 
