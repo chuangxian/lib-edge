@@ -3,6 +3,7 @@ package myzd.domain;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import myzd.annotations.GlobalNormalRequest;
 import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,4 +22,5 @@ public class TransferRequestParameters {
   private String prefix;
   private String token;
   private TransferAuditor transferAuditor;
+  private GlobalNormalRequest globalNormalRequest;
 }
