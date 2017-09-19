@@ -69,7 +69,7 @@ public class TransferRequest {
       log.error("httpServletResponse status is not 200. skip transfer request. status: {}", response.getStatus());
       return;
     }
-    if (validateMessage != null) {
+    if (validateMessage.getMessageMap() != null && validateMessage.getMessageMap().get("validateMessage") != null) {
       log.error("validateMessage is not null, skip transfer request. validateMessage: {}", validateMessage);
       return;
     }
