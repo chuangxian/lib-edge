@@ -1,5 +1,6 @@
 package myzd.services.impl;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,8 @@ import myzd.domain.TransferAuditor;
 import myzd.domain.TransferRequestParameters;
 import myzd.domain.ValidateMessage;
 import myzd.domain.exceptions.GenericException;
+import myzd.domain.request.PagedResult;
+import myzd.domain.request.ResultWrapper;
 import myzd.utils.RequestHelper;
 import okhttp3.*;
 import org.apache.commons.io.IOUtils;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.method.HandlerMethod;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,11 +35,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,7 +77,7 @@ public class TransferRequest {
       log.error("httpServletResponse status is not 200. skip transfer request. status: {}", response.getStatus());
       return;
     }
-    if (validateMessage.getMessageMap() != null && validateMessage.getMessageMap().get("validateMessage") != null) {
+    if (validateMessage != null && validateMessage.getMessageMap() != null && validateMessage.getMessageMap().get("validateMessage") != null) {
       log.error("validateMessage is not null, skip transfer request. validateMessage: {}", validateMessage);
       return;
     }
@@ -86,7 +94,7 @@ public class TransferRequest {
       log.debug("clientUrl:{}", clientUrl);
       doRequestOkHttp(clientUrl.toURI(), handlerMethod.getMethod().getAnnotation(JwtAuthorization.class),
         handlerMethod.getMethod().getAnnotation(SessionAuthorization.class),
-        request, response, token, handlerMethod.getMethod().getReturnType());
+        request, response, token, handlerMethod.getMethod());
     } catch (IOException | URISyntaxException e) {
       e.printStackTrace();
     }
@@ -250,14 +258,14 @@ public class TransferRequest {
    * @param request          request
    * @param response         response
    * @param token            token
-   * @param returnType       returnType
+   * @param method           method
    * @throws IOException      IOException
    * @throws GenericException GenericException
    */
   private void doRequestOkHttp(URI clientUri, JwtAuthorization jwtAuthorization, SessionAuthorization sessionAuthorization,
-                               HttpServletRequest request, HttpServletResponse response, String token, Class<?> returnType
+                               HttpServletRequest request, HttpServletResponse response, String token, Method method
   ) throws IOException, GenericException {
-    String method = request.getMethod();
+    String requestMethod = request.getMethod();
     RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), transferAuditor.getBody());
     Request clientRequest = new Request.Builder()
       .url(clientUri.toURL())
@@ -269,11 +277,11 @@ public class TransferRequest {
     if (jwtAuthorization != null || sessionAuthorization != null) {
       clientRequest = clientRequest.newBuilder().header("Authorization", token).build();
     }
-    if ("POST".equals(method)) {
+    if ("POST".equals(requestMethod)) {
       clientRequest = clientRequest.newBuilder().post(body).build();
-    } else if ("PUT".equals(method)) {
+    } else if ("PUT".equals(requestMethod)) {
       clientRequest = clientRequest.newBuilder().put(body).build();
-    } else if ("DELETE".equals(method)) {
+    } else if ("DELETE".equals(requestMethod)) {
       clientRequest = clientRequest.newBuilder().delete(body).build();
     }
     Response clientResponse = okHttpClient.newCall(clientRequest).execute();
@@ -290,16 +298,75 @@ public class TransferRequest {
     } else {
       if (responseBody != null) {
         //如果接口的返回值不为void，则responseBody的内容应该依据返回值内部的字段进行过滤
+        Class<?> returnType = method.getReturnType();
         if (returnType.getSimpleName().equals("void")) {
           log.debug("返回值类型: {}", returnType.getSimpleName());
           IOUtils.copy(responseBody.byteStream(), response.getWriter());
         } else {
+          //过滤参数信息并装配
+          if (!method.getReturnType().getSimpleName().contains("ResultWrapper")) {
+            log.debug("不是ResultWrapper");
+            IOUtils.copy(new ByteArrayInputStream
+              (objectMapper.writeValueAsString(objectMapper.readValue(responseBody.string(), method.getReturnType())).getBytes()), response.getWriter());
+            return;
+          }
+          //当返回值类型存在多层嵌套时
+          JavaType javaType = getJavaTypeByReturnType(method);
           IOUtils.copy(new ByteArrayInputStream
-            (objectMapper.writeValueAsString(objectMapper.readValue(responseBody.string(), returnType)).getBytes()), response.getWriter());
+            (objectMapper.writeValueAsString(objectMapper.readValue(responseBody.string(), javaType)).getBytes()), response.getWriter());
+          //  (objectMapper.writeValueAsString(objectMapper.readValue(responseBody.string(),new TypeReference<returnType>()))), response.getWriter());
         }
       } else {
-        log.info("{} response is null. {}", method, clientUri);
+        log.info("{} response is null. {}", requestMethod, clientUri);
       }
     }
+  }
+
+  private JavaType getJavaTypeByReturnType(Method method) {
+    ParameterizedType parameterizedType = (ParameterizedType) method.getGenericReturnType();
+    log.debug("parameterizedType : {}", parameterizedType);
+    String[] typeStrings = parameterizedType.getTypeName().split("<");
+    //-------------------------如果没有ResultWrapper嵌套
+    log.debug("进入处理逻辑");
+    if ((!typeStrings[1].contains("List") && !typeStrings[1].contains("PagedResult"))) {
+      log.debug("类型如ResultWrapper<Users>");
+      return objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, (Class<?>) parameterizedType.getActualTypeArguments()[0]);
+    }
+    //---------------------------目前只剩List和PagedResult嵌套
+    log.debug("取得最内层Class过程");
+    Type globalType = parameterizedType.getActualTypeArguments()[0];
+    for (int i = 1; i < typeStrings.length - 1; i++) {
+      log.debug("字符串数组当前值：{} ", typeStrings[i]);
+      if (!typeStrings[i].contains("List") && !typeStrings[i].contains("PagedResult")) {
+        break;//当此处不再是List或ResultWrapper的时候，证明已经到末尾
+      }
+      if (typeStrings[i].contains("List")) {
+        globalType = ((ParameterizedTypeImpl) globalType).getActualTypeArguments()[0];
+        log.debug("list的泛型值为: {}", globalType);
+        continue;
+      }
+      globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
+      log.debug("非List的泛型值为: {}", globalType);
+    }
+    log.debug("第一次装入:");
+    log.debug("字符串数组当前值: {}", typeStrings[typeStrings.length - 2]);
+    JavaType javaType = typeStrings[typeStrings.length - 2].contains("List") ?
+      objectMapper.getTypeFactory().constructParametricType(List.class, (Class<?>) globalType) :
+      objectMapper.getTypeFactory().constructParametricType(PagedResult.class, (Class<?>) globalType);
+    //最后装入阶段
+    log.debug("最后装入阶段:");
+    for (int i = typeStrings.length - 3; i >= 1; i--) {
+      if (typeStrings[i].contains("PagedResult")) {
+        log.debug("嵌入PagedWrapper:");
+        javaType = objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, javaType);
+        continue;
+      }
+      log.debug("嵌入List:");
+      javaType = objectMapper.getTypeFactory().constructParametricType(List.class, javaType);
+    }
+    //最后将结果嵌套嵌入ResultWrapper
+    log.debug("嵌入ResultWrapper:");
+    javaType = objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, javaType);
+    return javaType;
   }
 }
