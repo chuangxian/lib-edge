@@ -216,7 +216,8 @@ public class PenetrationService {
   private Object doRequestOkHttp(URI clientUri, HttpServletRequest request, Class controllerClass, Method method) throws IOException, GenericException {
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     //token
-    String token = getRequestAuthorizationToken(request, controllerClass, method);
+    String token = String.format("Bearer %s", getRequestAuthorizationToken(request, controllerClass, method));
+    log.debug("request token: {}", token);
     //authorization annotations
     JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
     SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
@@ -326,6 +327,7 @@ public class PenetrationService {
     JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
     SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
     String authorizationToken = request.getHeader("Authorization");
+    log.debug("authorizationToken: {}", authorizationToken);
     String token = null;
     if (StringUtils.isNoneBlank(authorizationToken) && authorizationToken.startsWith("Bearer ")) {
       token = authorizationToken.substring(7);
@@ -334,17 +336,17 @@ public class PenetrationService {
     if (jwtAuthorization == null && sessionAuthorization == null) {
       return token;
     }
-
     PenetrationConfig controllerConfig = (PenetrationConfig) controllerClass.getAnnotation(PenetrationConfig.class);
     PenetrationConfig actionConfig = method.getAnnotation(PenetrationConfig.class);
     Map<String, String> userIdentityMap = new HashMap<>();
     //若jwtAuthorization不为空则需要解密header内容
-    if (jwtAuthorization != null && StringUtils.isNoneBlank(token)) {
+    if (jwtAuthorization != null && token != null && StringUtils.isNoneBlank(token)) {
       //解密
       String envDecryption = StringUtils.isNoneBlank(controllerConfig.envDecryption()) ? controllerConfig.envDecryption() : actionConfig.envDecryption();
-      Algorithm algorithm = Algorithm.HMAC256(envDecryption);
+      Algorithm algorithm = Algorithm.HMAC256(env.getProperty(envDecryption));
+      log.debug("token: {}", token);
       DecodedJWT body = JWT.require(algorithm).acceptIssuedAt(300).build().verify(token);
-      body.getClaims().forEach((key, value) -> userIdentityMap.put(key, String.valueOf(value)));
+      body.getClaims().forEach((key, value) -> userIdentityMap.put(key, value.asString()));
     }
     if (sessionAuthorization != null) {
       HttpSession httpSession = request.getSession();
@@ -357,8 +359,9 @@ public class PenetrationService {
     }
     //加密
     String envEncryption = StringUtils.isNoneBlank(controllerConfig.envEncryption()) ? controllerConfig.envEncryption() : actionConfig.envEncryption();
-    Algorithm algorithm = Algorithm.HMAC256(envEncryption);
+    Algorithm algorithm = Algorithm.HMAC256(env.getProperty(envEncryption));
     JWTCreator.Builder builder = JWT.create();
+    log.debug("userIdentityMap: {}", userIdentityMap);
     userIdentityMap.forEach(builder::withClaim);
     builder.withIssuedAt(new Date());
     return builder.sign(algorithm);
