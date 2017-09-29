@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Created by admin on 2017/7/25.
  */
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PenetrationConfig {
   /**
