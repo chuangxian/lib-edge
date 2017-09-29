@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NormalRequest {
+public @interface PenetrationConfig {
   /**
    * 透传服务的host的环境变量值, eg: ims.service.host.
    * 默认为ims服务
@@ -23,4 +23,14 @@ public @interface NormalRequest {
    * 暂不支持包含PathParam的url.
    */
   String clientUrl() default "";
+
+  /**
+   * JWT加密的密钥的环境变量名
+   */
+  String envEncryption() default "";
+
+  /**
+   * JWT解密的密钥的环境变量名
+   */
+  String envDecryption() default "";
 }

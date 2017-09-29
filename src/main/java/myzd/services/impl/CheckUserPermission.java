@@ -3,11 +3,10 @@ package myzd.services.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import myzd.domain.RoleAuthority;
+import myzd.domain.UserPermission;
 import myzd.domain.exceptions.GenericException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +21,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
-public class CheckAuthority {
+public class CheckUserPermission {
 
   @Autowired
   private ObjectMapper objectMapper;
@@ -45,16 +44,16 @@ public class CheckAuthority {
         if (StringUtils.isBlank(roleAuthorityConfig)) {
           roleAuthorityConfig = environment.getProperty("role.authority.config");
         }
-        List<RoleAuthority> list = objectMapper.readValue(roleAuthorityConfig, new TypeReference<List<RoleAuthority>>() {
+        List<UserPermission> list = objectMapper.readValue(roleAuthorityConfig, new TypeReference<List<UserPermission>>() {
         });
         log.debug("role list: {}", list);
         boolean check = false;
-        for (RoleAuthority roleAuthority :
+        for (UserPermission userPermission :
           list) {
-          if (userRole.toLowerCase().endsWith(roleAuthority.getRole().toLowerCase())) {
-            if (roleAuthority.getAuthority() != null && roleAuthority.getAuthority().size() > 0) {
+          if (userRole.toLowerCase().endsWith(userPermission.getRole().toLowerCase())) {
+            if (userPermission.getAuthority() != null && userPermission.getAuthority().size() > 0) {
               for (String authority :
-                roleAuthority.getAuthority()) {
+                userPermission.getAuthority()) {
                 String urlAuthority = authority;
                 if (authority.contains("*")) {
                   urlAuthority = authority.substring(0, authority.indexOf("*"));

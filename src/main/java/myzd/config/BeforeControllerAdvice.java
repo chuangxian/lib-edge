@@ -2,16 +2,29 @@ package myzd.config;
 
 import lombok.extern.slf4j.Slf4j;
 import myzd.annotations.FilterParam;
-import myzd.domain.TransferAuditor;
+import myzd.annotations.FlowControl;
+import myzd.domain.visitlog.TemplateEnum;
+import myzd.services.impl.FilterParamService;
+import myzd.services.impl.FlowControlService;
+import myzd.services.impl.PenetrationKafkaService;
+import myzd.services.impl.PenetrationService;
+import myzd.utils.RequestHelper;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,62 +35,107 @@ import java.util.Map;
 @Slf4j
 public class BeforeControllerAdvice {
 
-  @Autowired
-  private TransferAuditor transferAuditor;
+  private final static String ENV_LOG_KAFKA_TOPIC = "topic.boot";
+  private final static String ENV_LOG_KAFKA_MESSAGE_SOURCE = "message.source";
+  private final static String ENV_LOG_KAFKA_MESSAGE_FORMAT = "log.access.format";
+  private final static String ENV_APPLICATION_NAME = "application.name";
 
-  /**
-   * 对配置参数进行过滤，并把auditor中params(是一个map)更新
-   *
-   * @param joinPoint joinPoint
-   */
-  private void filter(JoinPoint joinPoint) {
-    Method action = ((MethodSignature) joinPoint.getSignature()).getMethod();
-    FilterParam filterParam = action.getDeclaredAnnotation(FilterParam.class);
-    if (filterParam == null || !filterParam.switchButton()) {
-      return;
-    }
-    String[] includeArr = filterParam.include().split(",");
-    for (String s : includeArr) {
-      log.debug("include: {}", s);
-    }
-    String[] excludeArr = filterParam.exclude().split(",");
-    for (String s : excludeArr) {
-      log.debug("exclude: {}", s);
-    }
-    Map<String, String[]> paramsMap = new HashMap<>();
-    transferAuditor.getParams().forEach((String k, String[] v) -> {
-      boolean flag = true;
-      if (includeArr[0].equals("") && excludeArr[0].equals("")) {  //预防filter开关打开时，include和exclude都没有配置
-      } else if (!includeArr[0].equals("")) {
-        for (String str : includeArr) {
-          if (k.equals(str.replaceAll(" ", ""))) {
-            paramsMap.put(k, v);
-            break;
-          }
-        }
-      } else {
-        for (String str : excludeArr) {
-          if (k.equals(str.replaceAll(" ", ""))) {
-            flag = false;
-            break;
-          }
-        }
-        if (flag) {
-          paramsMap.put(k, v);
-        }
-      }
-    });
-    transferAuditor.setParams(paramsMap);
+  private String topic;
+  private String messageSource;
+  private String format;
+  private String serviceName;
+
+  @Autowired
+  private FlowControlService flowControlService;
+  @Autowired
+  private PenetrationService penetrationService;
+  @Autowired
+  private PenetrationKafkaService penetrationKafkaService;
+  @Autowired
+  private FilterParamService filterParamService;
+  @Autowired
+  private ConfigurableEnvironment environment;
+
+  private ThreadLocal<Long> startTime = new ThreadLocal<>();
+  private ThreadLocal<Map<String, String>> requestInfo = new ThreadLocal<>();
+
+  @Pointcut("execution(public * myzd.api.controllers.*.*(..))")
+  public void init() {
+    this.topic = environment.getProperty(ENV_LOG_KAFKA_TOPIC);
+    this.messageSource = environment.getProperty(ENV_LOG_KAFKA_MESSAGE_SOURCE);
+    this.format = environment.getProperty(ENV_LOG_KAFKA_MESSAGE_FORMAT);
+    this.serviceName = environment.getProperty(ENV_APPLICATION_NAME);
   }
 
-  @Before("execution(public * myzd.api.controllers.*.*(..))")
-  public void filtBeforeHandling(JoinPoint joinPoint) throws Exception {
-    Map<String, String[]> paramsMap = transferAuditor.getParams();
-    log.debug("before filter request params:");
-    paramsMap.forEach((key, value) -> log.debug("key: {}, value: {}", key, value));
-    filter(joinPoint);  //filter
-    log.debug("after filter request params:");
-    transferAuditor.getParams().forEach((key, value) -> log.debug("key: {}, value: {}", key, value));
+  @Before("init()")
+  public void filterBeforeHandling(JoinPoint joinPoint) throws Exception {
+    log.debug("before handing");
+    ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+    HttpServletRequest request = attributes.getRequest();
+    Map<String, String> requestInfoMap = new LinkedHashMap<>();
+    String clientIpAddr = RequestHelper.getRealIp(request);
+    String requestUri = request.getRequestURI();
+    String requestMethod = request.getMethod();
+    int size = 0;
+    requestInfoMap.put(TemplateEnum.MESSAGE_SOURCE, messageSource);
+    requestInfoMap.put(TemplateEnum.REMOTE_HOST, clientIpAddr);
+    requestInfoMap.put(TemplateEnum.REQUEST_METHOD, requestMethod);
+    requestInfoMap.put(TemplateEnum.RESPONSE_BODY_SIZE, String.valueOf(size));
+    requestInfoMap.put(TemplateEnum.REQUEST_URI, requestUri);
+    requestInfoMap.put(TemplateEnum.SERVICE_NAME, serviceName);
+    requestInfo.set(requestInfoMap);
+    startTime.set(System.currentTimeMillis());
+  }
+
+  @Around("init()")
+  public Object filterAroundHandling(ProceedingJoinPoint joinPoint) throws Throwable {
+    log.debug("around handing");
+    //action
+    MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+    Method action = methodSignature.getMethod();
+    //接收到请求,记录请求内容
+    ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+    HttpServletRequest request = attributes.getRequest();
+    //流控
+    String clientIp = request.getRemoteAddr();
+    String sessionId = request.getSession().getId();
+    String requestUri = request.getRequestURI();
+    String requestMethod = request.getMethod();
+    long requestTimestamp = System.currentTimeMillis();
+    flowControlService.flowController(clientIp, sessionId, requestUri, requestMethod, requestTimestamp, action.getDeclaredAnnotation(FlowControl.class));
+    //过滤参数
+    Map<String, String[]> filterParam = filterParamService.filterParam(request.getParameterMap(), action.getDeclaredAnnotation(FilterParam.class));
+    //触发action, 完成参数校验部分
+    Object object = joinPoint.proceed();
+    log.debug("local response: {}", object);
+    //透传
+    object = penetrationService.penetrate(request, action, methodSignature.getDeclaringType(), filterParam);
+    log.debug("penetration response: {}", object);
+    return object;
+  }
+
+  @AfterReturning(returning = "response", pointcut = "init()")
+  public void doAfterReturning(Object response) throws Throwable {
+    // 处理完请求, 发送kafka消息
+    String responseTime = String.valueOf((double) (System.currentTimeMillis() - startTime.get()) / 1000);
+    Map<String, String> requestInfoMap = requestInfo.get();
+    requestInfoMap.put(TemplateEnum.RESPONSE_TIME, responseTime);
+    requestInfoMap.put(TemplateEnum.RESPONSE_STATUS, HttpStatus.OK.toString());
+    List<String> keyList = Arrays.asList(format.split("\\|"));
+    StringBuilder message = new StringBuilder();
+    for (String key : keyList) {
+      log.debug(key);
+      message.append("|");
+      message.append(requestInfoMap.get(key));
+    }
+    log.debug("send message message: {}", message.substring(1));
+    penetrationKafkaService.sendMessage(topic, String.valueOf(message).substring(1));
+    log.info("RESPONSE : " + response);
+  }
+
+  @AfterThrowing(value = "init()", throwing = "ex")
+  private void filterAfterThrowing(Throwable ex) {
+    log.error("has some exception.", ex);
   }
 
 }

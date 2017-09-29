@@ -21,7 +21,7 @@ import java.util.Date;
  */
 @Component
 @Slf4j
-public class TransferKafkaService {
+public class PenetrationKafkaService {
 
   @Autowired
   private KafkaTemplate<String, String> kafkaTemplate;

@@ -9,23 +9,23 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FilterParam {
   /**
-   * 控制过滤的开关，弱为true，则过滤功能奏效
+   * 控制过滤的开关，若为true，则过滤功能奏效
    *
    * @return boolean
    */
-  boolean switchButton() default true;
+  boolean enable() default true;
 
   /**
    * 未包含的参数被过滤掉
    *
    * @return String
    */
-  String include() default "";
+  String[] include() default "";
 
   /**
    * 包含的参数被过滤掉
    *
    * @return String
    */
-  String exclude() default "";
+  String[] exclude() default "";
 }

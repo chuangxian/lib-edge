@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class RequestFlow {
+public class FlowControl {
   private int secondTimes;
   private int minuteTimes;
   private int hourTimes;

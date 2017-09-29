@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class RoleAuthority {
+public class UserPermission {
 
   private String role;
   private List<String> authority;

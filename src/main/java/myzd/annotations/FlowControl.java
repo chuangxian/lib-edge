@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequestFlowHandle {
+public @interface FlowControl {
 
   /**
    * 一秒内可访问次数
