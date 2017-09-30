@@ -82,7 +82,6 @@ public class RedisSessionConfiguration {
     defaultCookieSerializer.setCookiePath(env.getProperty(COOKIE_PATH));
     defaultCookieSerializer.setUseSecureCookie(Boolean.parseBoolean(env.getProperty(COOKIE_SECURE)));
     defaultCookieSerializer.setUseHttpOnlyCookie(Boolean.parseBoolean(env.getProperty(COOKIE_HTTP_ONLY)));
-    defaultCookieSerializer.setDomainName(env.getProperty(COOKIE_DOMAIN));
     defaultCookieSerializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
     return defaultCookieSerializer;
   }
