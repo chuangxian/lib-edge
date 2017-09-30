@@ -40,11 +40,6 @@ public class BeforeControllerAdvice {
   private final static String ENV_LOG_KAFKA_MESSAGE_FORMAT = "log.access.format";
   private final static String ENV_APPLICATION_NAME = "application.name";
 
-  private String topic;
-  private String messageSource;
-  private String format;
-  private String serviceName;
-
   @Autowired
   private FlowControlService flowControlService;
   @Autowired
@@ -61,11 +56,6 @@ public class BeforeControllerAdvice {
 
   @Pointcut("execution(public * myzd.api.controllers.*.*(..))")
   public void init() {
-    this.topic = environment.getProperty(ENV_LOG_KAFKA_TOPIC);
-    this.messageSource = environment.getProperty(ENV_LOG_KAFKA_MESSAGE_SOURCE);
-    this.format = environment.getProperty(ENV_LOG_KAFKA_MESSAGE_FORMAT);
-    this.serviceName = environment.getProperty(ENV_APPLICATION_NAME);
-    log.debug("env key: {}, value: {}", ENV_LOG_KAFKA_MESSAGE_FORMAT, format);
   }
 
   @Before("init()")
@@ -78,12 +68,12 @@ public class BeforeControllerAdvice {
     String requestUri = request.getRequestURI();
     String requestMethod = request.getMethod();
     int size = 0;
-    requestInfoMap.put(TemplateEnum.MESSAGE_SOURCE, messageSource);
+    requestInfoMap.put(TemplateEnum.MESSAGE_SOURCE, environment.getProperty(ENV_LOG_KAFKA_MESSAGE_SOURCE));
     requestInfoMap.put(TemplateEnum.REMOTE_HOST, clientIpAddr);
     requestInfoMap.put(TemplateEnum.REQUEST_METHOD, requestMethod);
     requestInfoMap.put(TemplateEnum.RESPONSE_BODY_SIZE, String.valueOf(size));
     requestInfoMap.put(TemplateEnum.REQUEST_URI, requestUri);
-    requestInfoMap.put(TemplateEnum.SERVICE_NAME, serviceName);
+    requestInfoMap.put(TemplateEnum.SERVICE_NAME, environment.getProperty(ENV_APPLICATION_NAME));
     requestInfo.set(requestInfoMap);
     startTime.set(System.currentTimeMillis());
   }
@@ -122,7 +112,7 @@ public class BeforeControllerAdvice {
     Map<String, String> requestInfoMap = requestInfo.get();
     requestInfoMap.put(TemplateEnum.RESPONSE_TIME, responseTime);
     requestInfoMap.put(TemplateEnum.RESPONSE_STATUS, HttpStatus.OK.toString());
-    List<String> keyList = Arrays.asList(format.split("\\|"));
+    List<String> keyList = Arrays.asList(environment.getProperty(ENV_LOG_KAFKA_MESSAGE_FORMAT).split("\\|"));
     StringBuilder message = new StringBuilder();
     for (String key : keyList) {
       log.debug(key);
@@ -130,7 +120,7 @@ public class BeforeControllerAdvice {
       message.append(requestInfoMap.get(key));
     }
     log.debug("send message message: {}", message.substring(1));
-    penetrationKafkaService.sendMessage(topic, String.valueOf(message).substring(1));
+    penetrationKafkaService.sendMessage(environment.getProperty(ENV_LOG_KAFKA_TOPIC), String.valueOf(message).substring(1));
     log.info("RESPONSE : " + response);
   }
 
