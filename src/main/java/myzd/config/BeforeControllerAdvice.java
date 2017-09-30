@@ -14,7 +14,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -54,7 +54,7 @@ public class BeforeControllerAdvice {
   @Autowired
   private FilterParamService filterParamService;
   @Autowired
-  private ConfigurableEnvironment environment;
+  private Environment environment;
 
   private ThreadLocal<Long> startTime = new ThreadLocal<>();
   private ThreadLocal<Map<String, String>> requestInfo = new ThreadLocal<>();
