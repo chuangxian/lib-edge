@@ -3,6 +3,7 @@ package myzd.config;
 import lombok.extern.slf4j.Slf4j;
 import myzd.annotations.FilterParam;
 import myzd.annotations.FlowControl;
+import myzd.annotations.PenetrationConfig;
 import myzd.domain.visitlog.TemplateEnum;
 import myzd.services.impl.FilterParamService;
 import myzd.services.impl.FlowControlService;
@@ -100,7 +101,10 @@ public class BeforeControllerAdvice {
     Object object = joinPoint.proceed();
     log.debug("local response: {}", object);
     //透传
-    object = penetrationService.penetrate(request, action, methodSignature.getDeclaringType(), filterParam);
+    PenetrationConfig penetrationConfig = action.getAnnotation(PenetrationConfig.class);
+    if (penetrationConfig != null) {
+      object = penetrationService.penetrate(request, action, methodSignature.getDeclaringType(), filterParam);
+    }
     log.debug("penetration response: {}", object);
     return object;
   }
