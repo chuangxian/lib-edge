@@ -65,6 +65,7 @@ public class BeforeControllerAdvice {
     this.messageSource = environment.getProperty(ENV_LOG_KAFKA_MESSAGE_SOURCE);
     this.format = environment.getProperty(ENV_LOG_KAFKA_MESSAGE_FORMAT);
     this.serviceName = environment.getProperty(ENV_APPLICATION_NAME);
+    log.debug("env key: {}, value: {}", ENV_LOG_KAFKA_MESSAGE_FORMAT, format);
   }
 
   @Before("init()")
