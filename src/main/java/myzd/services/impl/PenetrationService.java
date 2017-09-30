@@ -64,7 +64,7 @@ public class PenetrationService {
       log.debug("penetrate request method: {}", requestMethod);
       if ("OPTIONS".equals(requestMethod)) return null;
       String mappingUrl = getMappingUrl(requestMethod, method);
-      URL clientUrl = getRequestUri(method, controllerClass, mappingUrl, filterParam);
+      URL clientUrl = getRequestUri(request, method, controllerClass, mappingUrl, filterParam);
       log.debug("clientUrl:{}", clientUrl);
       return doRequestOkHttp(clientUrl.toURI(), request, controllerClass, method);
     } catch (IOException | URISyntaxException e) {
@@ -106,19 +106,15 @@ public class PenetrationService {
    * @return URI
    * @throws URISyntaxException exception
    */
-  private URL getRequestUri(Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
+  private URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
     throws URISyntaxException, UnsupportedEncodingException, MalformedURLException, GenericException {
     PenetrationConfig controllerPenetrationConfig = (PenetrationConfig) controllerClass.getAnnotation(PenetrationConfig.class);
-    RequestMapping requestMapping = (RequestMapping) controllerClass.getAnnotation(RequestMapping.class);
-    String requestUri = String.format("%s%s", requestMapping.value()[0], mappingUrl);
+    String requestUri = request.getRequestURI();
     log.debug("requestUri:{}", requestUri);
     String finalRequestUrl = mappingUrl;
     PenetrationConfig penetrationConfig = method.getAnnotation(PenetrationConfig.class);
     if (penetrationConfig != null && StringUtils.isNoneBlank(penetrationConfig.clientUrl())) {
       finalRequestUrl = penetrationConfig.clientUrl();
-    }
-    if (requestUri.startsWith("/")) {
-      finalRequestUrl = requestUri.substring(1);
     }
     String requestHost = null;
     if (controllerPenetrationConfig != null && StringUtils.isNoneBlank(controllerPenetrationConfig.clientHost())) {
@@ -194,10 +190,18 @@ public class PenetrationService {
     String[] urlModelArr = urlModel.split("/");
     String[] requestUriArr = requestUri.split("/");
     Map<String, String> pathParamMap = new HashMap<>();
+    int startIndex = 0;
+    //若requestUri与mapping中定义的路径长度不同, 则比较第一个相同的字符, 为requestUri比较的起点
+    if (urlModelArr.length != requestUriArr.length) {
+      for (int i = 0; i < requestUriArr.length; i++) {
+        if (urlModelArr[0].equals(requestUriArr[i])) startIndex = i;
+      }
+    }
     for (int i = 0; i < urlModelArr.length; i++) {
-      if (i < requestUriArr.length) {
-        if (urlModelArr[i].startsWith("{") && urlModelArr[i].endsWith("}") && !urlModelArr[i].equals(requestUriArr[i])) {
-          pathParamMap.put(urlModelArr[i], requestUriArr[i]);
+      int j = startIndex + i;
+      if (j < requestUriArr.length) {
+        if (urlModelArr[i].startsWith("{") && urlModelArr[i].endsWith("}") && !urlModelArr[i].equals(requestUriArr[j])) {
+          pathParamMap.put(urlModelArr[i], requestUriArr[j]);
         }
       }
     }
