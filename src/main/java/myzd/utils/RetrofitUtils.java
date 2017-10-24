@@ -11,18 +11,19 @@ import retrofit2.Response;
  */
 @Slf4j
 public class RetrofitUtils {
+  private final static Integer RESPONSE_OK_CODE = 1000000;
 
   public static <T> T getResponseBody(Response<ResultWrapper<T>> response) throws GenericException {
     ResultWrapper<T> resultWrapper = response.body();
     if (response.isSuccessful() && resultWrapper != null) {
-      if (resultWrapper.getCode() == 1000000) {
+      if (resultWrapper.getCode() == RESPONSE_OK_CODE) {
         return resultWrapper.getData();
       }
       log.error("Services has some errors. resultWrapper: {}", resultWrapper);
       throw new GenericException(String.valueOf(resultWrapper.getCode()), resultWrapper.getMessage());
     }
     log.error("Request is not success. code: {}, message: {}, response: {}", response.code(), response.message(), response);
-    throw new GenericException("1910001", String.format("请求出错, {} - {}", String.valueOf(response.code()), response.message()));
+    throw new GenericException("1910001", String.format("请求出错, %s - %s", String.valueOf(response.code()), response.message()));
   }
 
 

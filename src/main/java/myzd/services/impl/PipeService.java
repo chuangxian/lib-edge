@@ -9,21 +9,22 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import myzd.annotations.JwtAuthorization;
-import myzd.annotations.PenetrationConfig;
+import myzd.annotations.PipeConfig;
 import myzd.annotations.SessionAuthorization;
 import myzd.domain.exceptions.GenericException;
 import myzd.domain.request.PagedResult;
 import myzd.domain.request.ResultWrapper;
 import myzd.utils.RequestHelper;
 import okhttp3.*;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,19 +41,19 @@ import java.net.URL;
 import java.util.*;
 
 /**
- * Created by zks on 2017/8/2.
+ * @author zks
  * 透传服务
  */
 @Component
 @Slf4j
-public class PenetrationService {
+public class PipeService {
 
   private final Environment env;
   private final OkHttpClient okHttpClient;
   private final ObjectMapper objectMapper;
 
   @Autowired
-  public PenetrationService(Environment env, OkHttpClient okHttpClient, ObjectMapper objectMapper) {
+  public PipeService(Environment env, OkHttpClient okHttpClient, ObjectMapper objectMapper) {
     this.env = env;
     this.okHttpClient = okHttpClient;
     this.objectMapper = objectMapper;
@@ -108,20 +109,20 @@ public class PenetrationService {
    */
   private URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
     throws URISyntaxException, UnsupportedEncodingException, MalformedURLException, GenericException {
-    PenetrationConfig controllerPenetrationConfig = (PenetrationConfig) controllerClass.getAnnotation(PenetrationConfig.class);
+    PipeConfig controllerPipeConfig = (PipeConfig) controllerClass.getAnnotation(PipeConfig.class);
     String requestUri = request.getRequestURI();
     log.debug("requestUri:{}", requestUri);
     String finalRequestUrl = mappingUrl;
-    PenetrationConfig penetrationConfig = method.getAnnotation(PenetrationConfig.class);
-    if (penetrationConfig != null && StringUtils.isNoneBlank(penetrationConfig.clientUrl())) {
-      finalRequestUrl = penetrationConfig.clientUrl();
+    PipeConfig pipeConfig = method.getAnnotation(PipeConfig.class);
+    if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientUrl())) {
+      finalRequestUrl = pipeConfig.clientUrl();
     }
     String requestHost = null;
-    if (controllerPenetrationConfig != null && StringUtils.isNoneBlank(controllerPenetrationConfig.clientHost())) {
-      requestHost = env.getProperty(controllerPenetrationConfig.clientHost());
+    if (controllerPipeConfig != null && StringUtils.isNoneBlank(controllerPipeConfig.clientHost())) {
+      requestHost = env.getProperty(controllerPipeConfig.clientHost());
     }
-    if (penetrationConfig != null && StringUtils.isNoneBlank(penetrationConfig.clientHost())) {
-      requestHost = env.getProperty(penetrationConfig.clientHost());
+    if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientHost())) {
+      requestHost = env.getProperty(pipeConfig.clientHost());
     }
     if (requestHost == null) {
       throw new GenericException("1911003", "透传Host不能为空");
@@ -340,8 +341,8 @@ public class PenetrationService {
     if (jwtAuthorization == null && sessionAuthorization == null) {
       return token;
     }
-    PenetrationConfig controllerConfig = (PenetrationConfig) controllerClass.getAnnotation(PenetrationConfig.class);
-    PenetrationConfig actionConfig = method.getAnnotation(PenetrationConfig.class);
+    PipeConfig controllerConfig = (PipeConfig) controllerClass.getAnnotation(PipeConfig.class);
+    PipeConfig actionConfig = method.getAnnotation(PipeConfig.class);
     Map<String, String> userIdentityMap = new HashMap<>();
     //若jwtAuthorization不为空则需要解密header内容
     if (jwtAuthorization != null && token != null && StringUtils.isNoneBlank(token)) {

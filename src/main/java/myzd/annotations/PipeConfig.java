@@ -6,11 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by admin on 2017/7/25.
+ * @author zks
+ * 透传配置的注解
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PenetrationConfig {
+public @interface PipeConfig {
   /**
    * 透传服务的host的环境变量值, eg: ims.service.host.
    * 默认为ims服务

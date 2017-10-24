@@ -16,12 +16,12 @@ import java.io.IOException;
 import java.util.Date;
 
 /**
- * Created by zks on 18/07/2017.
+ * @author zks
  * 发送kafka消息的服务
  */
 @Component
 @Slf4j
-public class PenetrationKafkaService {
+public class PipeKafkaService {
 
   @Autowired
   private KafkaTemplate<String, String> kafkaTemplate;

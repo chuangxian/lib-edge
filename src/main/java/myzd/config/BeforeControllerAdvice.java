@@ -3,12 +3,12 @@ package myzd.config;
 import lombok.extern.slf4j.Slf4j;
 import myzd.annotations.FilterParam;
 import myzd.annotations.FlowControl;
-import myzd.annotations.PenetrationConfig;
+import myzd.annotations.PipeConfig;
 import myzd.domain.visitlog.TemplateEnum;
 import myzd.services.impl.FilterParamService;
 import myzd.services.impl.FlowControlService;
-import myzd.services.impl.PenetrationKafkaService;
-import myzd.services.impl.PenetrationService;
+import myzd.services.impl.PipeKafkaService;
+import myzd.services.impl.PipeService;
 import myzd.utils.RequestHelper;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -44,9 +44,9 @@ public class BeforeControllerAdvice {
   @Autowired
   private FlowControlService flowControlService;
   @Autowired
-  private PenetrationService penetrationService;
+  private PipeService penetrationService;
   @Autowired
-  private PenetrationKafkaService penetrationKafkaService;
+  private PipeKafkaService pipeKafkaService;
   @Autowired
   private FilterParamService filterParamService;
   @Autowired
@@ -101,8 +101,8 @@ public class BeforeControllerAdvice {
     Object object = joinPoint.proceed();
     log.debug("local response: {}", object);
     //透传
-    PenetrationConfig penetrationConfig = action.getAnnotation(PenetrationConfig.class);
-    if (penetrationConfig != null) {
+    PipeConfig pipeConfig = action.getAnnotation(PipeConfig.class);
+    if (pipeConfig != null) {
       object = penetrationService.penetrate(request, action, methodSignature.getDeclaringType(), filterParam);
     }
     log.debug("penetration response: {}", object);
@@ -124,7 +124,7 @@ public class BeforeControllerAdvice {
       message.append(requestInfoMap.get(key));
     }
     log.debug("send message message: {}", message.substring(1));
-    penetrationKafkaService.sendMessage(environment.getProperty(ENV_LOG_KAFKA_TOPIC), String.valueOf(message).substring(1));
+    pipeKafkaService.sendMessage(environment.getProperty(ENV_LOG_KAFKA_TOPIC), String.valueOf(message).substring(1));
     log.info("RESPONSE : " + response);
   }
 
