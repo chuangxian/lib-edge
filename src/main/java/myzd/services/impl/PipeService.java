@@ -34,10 +34,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -63,7 +60,9 @@ public class PipeService {
     try {
       String requestMethod = request.getMethod();
       log.debug("penetrate request method: {}", requestMethod);
-      if ("OPTIONS".equals(requestMethod)) return null;
+      if ("OPTIONS".equals(requestMethod)) {
+        return null;
+      }
       String mappingUrl = getMappingUrl(requestMethod, method);
       URL clientUrl = getRequestUri(request, method, controllerClass, mappingUrl, filterParam);
       log.debug("clientUrl:{}", clientUrl);
@@ -162,7 +161,9 @@ public class PipeService {
     builder.host(url.getHost());
     builder.addPathSegments(path);
     builder.addPathSegments(finalRequestUrl);
-    // builder.addPathSegments(id);
+    if (url.getPort() > 0) {
+      builder.port(url.getPort());
+    }
     filterParam.forEach((key, value) -> {
       log.debug("request params: {}: {}", key, value);
       builder.addQueryParameter(key, value[0]);
@@ -195,14 +196,29 @@ public class PipeService {
     //若requestUri与mapping中定义的路径长度不同, 则比较第一个相同的字符, 为requestUri比较的起点
     if (urlModelArr.length != requestUriArr.length) {
       for (int i = 0; i < requestUriArr.length; i++) {
-        if (urlModelArr[0].equals(requestUriArr[i])) startIndex = i;
+        if (urlModelArr[0].equals(requestUriArr[i])) {
+          startIndex = i;
+        }
       }
     }
     for (int i = 0; i < urlModelArr.length; i++) {
       int j = startIndex + i;
       if (j < requestUriArr.length) {
         if (urlModelArr[i].startsWith("{") && urlModelArr[i].endsWith("}") && !urlModelArr[i].equals(requestUriArr[j])) {
-          pathParamMap.put(urlModelArr[i], requestUriArr[j]);
+          String paramValue = requestUriArr[j];
+          if (urlModelArr[i].startsWith("{") && urlModelArr[i].endsWith("}") && !urlModelArr[i].equals(paramValue)) {
+            try {
+              // 如果参数值为空或encode过, 则直接透传, 否则参数需要encode
+              // 为了使参数encode出错不影响程序流程, catch encode的异常
+              if (StringUtils.isBlank(paramValue) || !paramValue.equals(URLDecoder.decode(paramValue, "UTF-8"))) {
+                pathParamMap.put(urlModelArr[i], paramValue);
+              } else {
+                pathParamMap.put(urlModelArr[i], URLEncoder.encode(paramValue, "UTF-8"));
+              }
+            } catch (UnsupportedEncodingException e) {
+              log.error("encode request params error. param: {}.{}", paramValue, e);
+            }
+          }
         }
       }
     }
@@ -252,7 +268,7 @@ public class PipeService {
     if (responseBody != null) {
       //如果接口的返回值不为void，则responseBody的内容应该依据返回值内部的字段进行过滤
       Class<?> returnType = method.getReturnType();
-      if (returnType.getSimpleName().equals("void")) {
+      if ("void".equals(returnType.getSimpleName())) {
         log.debug("返回值类型: {}", returnType.getSimpleName());
         return responseBody.string();
       } else {
