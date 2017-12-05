@@ -130,7 +130,7 @@ public class BeforeControllerAdvice {
 
   @AfterThrowing(value = "init()", throwing = "ex")
   private void filterAfterThrowing(Throwable ex) {
-    log.error("has some exception.", ex);
+    log.warn("has some exception.", ex);
   }
 
 }
