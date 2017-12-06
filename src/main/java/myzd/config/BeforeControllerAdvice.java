@@ -16,12 +16,14 @@ import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -51,6 +53,8 @@ public class BeforeControllerAdvice {
   private FilterParamService filterParamService;
   @Autowired
   private Environment environment;
+  @Autowired
+  private TaskExecutor kafkaMsgExecutor;
 
   private ThreadLocal<Long> startTime = new ThreadLocal<>();
   private ThreadLocal<Map<String, String>> requestInfo = new ThreadLocal<>();
@@ -123,8 +127,14 @@ public class BeforeControllerAdvice {
       message.append("|");
       message.append(requestInfoMap.get(key));
     }
-    log.debug("send message message: {}", message.substring(1));
-    pipeKafkaService.sendMessage(environment.getProperty(ENV_LOG_KAFKA_TOPIC), String.valueOf(message).substring(1));
+    kafkaMsgExecutor.execute(() -> {
+      log.debug("send message: {}", message.substring(1));
+      try {
+        pipeKafkaService.sendMessage(environment.getProperty(ENV_LOG_KAFKA_TOPIC), String.valueOf(message).substring(1));
+      } catch (IOException e) {
+        log.warn("send request kafka message error.", e);
+      }
+    });
     log.info("RESPONSE : " + response);
   }
 
