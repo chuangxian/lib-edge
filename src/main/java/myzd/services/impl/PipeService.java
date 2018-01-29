@@ -49,6 +49,8 @@ public class PipeService {
   private final OkHttpClient okHttpClient;
   private final ObjectMapper objectMapper;
 
+  private final static String SERVER_CONTEXT_PATH = "server.context.path";
+
   @Autowired
   public PipeService(Environment env, OkHttpClient okHttpClient, ObjectMapper objectMapper) {
     this.env = env;
@@ -115,6 +117,10 @@ public class PipeService {
     PipeConfig pipeConfig = method.getAnnotation(PipeConfig.class);
     if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientUrl())) {
       finalRequestUrl = pipeConfig.clientUrl();
+    }
+    String serverContextPath = env.getProperty(SERVER_CONTEXT_PATH);
+    if (StringUtils.isNotBlank(serverContextPath) && requestUri.startsWith(serverContextPath)) {
+      finalRequestUrl = requestUri.substring(serverContextPath.length());
     }
     String requestHost = null;
     if (controllerPipeConfig != null && StringUtils.isNoneBlank(controllerPipeConfig.clientHost())) {
