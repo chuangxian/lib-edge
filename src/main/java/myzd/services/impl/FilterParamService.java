@@ -1,9 +1,11 @@
 package myzd.services.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import myzd.annotations.FilterParam;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,13 +16,15 @@ import java.util.Map;
 @Slf4j
 public class FilterParamService {
 
-  public Map<String, String[]> filterParam(Map<String, String[]> requestParam, myzd.annotations.FilterParam filterParam) {
+  public Map<String, String[]> filterParam(Map<String, String[]> requestParam, FilterParam filterParam) {
     if (filterParam == null || !filterParam.enable()) {
       return requestParam;
     }
     Map<String, String[]> paramsMap = new HashMap<>();
+
     String[] includeArr = filterParam.include();
     String[] excludeArr = filterParam.exclude();
+
     //添加参数
     if (includeArr.length == 0) {
       paramsMap = requestParam;

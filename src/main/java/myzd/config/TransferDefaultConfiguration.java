@@ -3,6 +3,7 @@ package myzd.config;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -22,7 +23,10 @@ public class TransferDefaultConfiguration {
 
   @Bean
   public OkHttpClient okHttpClient() {
-    return new OkHttpClient.Builder().build();
+    return new OkHttpClient.Builder()
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build();
   }
 
   @Bean
@@ -36,4 +40,7 @@ public class TransferDefaultConfiguration {
     executor.setQueueCapacity(queueCapacity);
     return executor;
   }
+
+
+
 }

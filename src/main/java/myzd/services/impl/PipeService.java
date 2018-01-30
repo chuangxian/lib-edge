@@ -4,14 +4,17 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import myzd.annotations.Filename;
 import myzd.annotations.JwtAuthorization;
 import myzd.annotations.PipeConfig;
 import myzd.annotations.SessionAuthorization;
 import myzd.domain.exceptions.GenericException;
+import myzd.domain.request.ListResult;
 import myzd.domain.request.PagedResult;
 import myzd.domain.request.ResultWrapper;
 import myzd.utils.RequestHelper;
@@ -19,6 +22,7 @@ import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,9 +32,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -49,24 +53,28 @@ public class PipeService {
   private final OkHttpClient okHttpClient;
   private final ObjectMapper objectMapper;
 
+  @Value("${filename}")
+  private String filename;
+
   @Autowired
   public PipeService(Environment env, OkHttpClient okHttpClient, ObjectMapper objectMapper) {
-	this.env = env;
-	this.okHttpClient = okHttpClient;
-	this.objectMapper = objectMapper;
+		this.env = env;
+		this.okHttpClient = okHttpClient;
+		this.objectMapper = objectMapper;
   }
 
-  public Object penetrate(HttpServletRequest request, Method method, Class controllerClass, Map<String, String[]> filterParam) throws GenericException {
+  public Object penetrate(HttpServletRequest request, HttpServletResponse response, Method method, List requestBody, Class controllerClass, Map<String, String[]> filterParam) throws GenericException {
 	try {
 	  String requestMethod = request.getMethod();
 	  log.debug("penetrate request method: {}", requestMethod);
 	  if ("OPTIONS".equals(requestMethod)) {
-		return null;
+			return null;
 	  }
 	  String mappingUrl = getMappingUrl(requestMethod, method);
 	  URL clientUrl = getRequestUri(request, method, controllerClass, mappingUrl, filterParam);
 	  log.debug("clientUrl:{}", clientUrl);
-	  return doRequestOkHttp(clientUrl.toURI(), request, controllerClass, method);
+	  //得到返回内容
+	  return doRequestOkHttp(clientUrl.toURI(), request, response, requestBody, controllerClass, method);
 	} catch (IOException | URISyntaxException e) {
 	  e.printStackTrace();
 	}
@@ -77,7 +85,7 @@ public class PipeService {
    * @param method method
    * @return String
    */
-  private String getMappingUrl(String requestMethod, Method method) {
+  public String getMappingUrl(String requestMethod, Method method) {
 	String[] mappingValue;
 	switch (requestMethod) {
 	  case "POST":
@@ -106,45 +114,59 @@ public class PipeService {
    * @return URI
    * @throws URISyntaxException exception
    */
-  private URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
-	throws URISyntaxException, UnsupportedEncodingException, MalformedURLException, GenericException {
-	PipeConfig controllerPipeConfig = (PipeConfig) controllerClass.getAnnotation(PipeConfig.class);
-	String requestUri = request.getRequestURI();
-	log.debug("requestUri:{}", requestUri);
-	String finalRequestUrl = mappingUrl;
-	PipeConfig pipeConfig = method.getAnnotation(PipeConfig.class);
-	if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientUrl())) {
-	  finalRequestUrl = pipeConfig.clientUrl();
-	}
-	String requestHost = null;
-	if (controllerPipeConfig != null && StringUtils.isNoneBlank(controllerPipeConfig.clientHost())) {
-	  requestHost = env.getProperty(controllerPipeConfig.clientHost());
-	}
-	if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientHost())) {
-	  requestHost = env.getProperty(pipeConfig.clientHost());
-	}
-	if (requestHost == null) {
-	  throw new GenericException("1911003", "透传Host不能为空");
-	}
-	URL url = new URL(requestHost);
-	String path = url.getPath();
-	if (path.startsWith("/")) {
-	  path = path.substring(1);
-	}
-	if (path.endsWith("/")) {
-	  path = path.substring(0, path.length() - 1);
-	}
-	//get a map which have many <key,value> like <"{orderNumber}","123">
-	Map<String, String> paramMap = getPathParamMap(mappingUrl, requestUri);
-	for (Map.Entry<String, String> entry : paramMap.entrySet()) {
-	  finalRequestUrl = finalRequestUrl.replace(entry.getKey(), entry.getValue());
-	}
-	if (finalRequestUrl.startsWith("/")) {
-	  finalRequestUrl = finalRequestUrl.substring(1);
-	}
-	log.debug("finalRequestUri:{}", finalRequestUrl);
-	HttpUrl.Builder builder = getBuilder(url, path, finalRequestUrl, filterParam);
-	return builder.build().url();
+  public URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
+					throws URISyntaxException, UnsupportedEncodingException, MalformedURLException, GenericException {
+
+  	//得到controller类上的@PipeConfig.clientHost
+  	PipeConfig controllerPipeConfig = (PipeConfig) controllerClass.getAnnotation(PipeConfig.class);
+
+  	//得到http请求内的uri
+  	String requestUri = request.getRequestURI();
+		log.debug("requestUri:{}", requestUri);
+
+		String finalRequestUrl = mappingUrl;
+
+		//得到方法上的@PipeConfig.clientUrl（选填）
+		PipeConfig pipeConfig = method.getAnnotation(PipeConfig.class);
+		if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientUrl())) {
+			finalRequestUrl = pipeConfig.clientUrl();
+		}
+
+		//得到要透传的服务的host
+		String requestHost = null;
+		if (controllerPipeConfig != null && StringUtils.isNoneBlank(controllerPipeConfig.clientHost())) {
+			requestHost = env.resolvePlaceholders(controllerPipeConfig.clientHost());
+		}
+		if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientHost())) {
+			requestHost = env.resolvePlaceholders(controllerPipeConfig.clientHost());
+		}
+		if (requestHost == null) {
+			throw new GenericException("1911003", "透传Host不能为空");
+		}
+
+
+		URL url = new URL(requestHost);
+		String path = url.getPath();
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+		if (path.endsWith("/")) {
+			path = path.substring(0, path.length() - 1);
+		}
+
+		//get a map which have many <key,value> like <"{orderNumber}","123">
+		Map<String, String> paramMap = getPathParamMap(mappingUrl, requestUri);
+		for (Map.Entry<String, String> entry : paramMap.entrySet()) {
+			finalRequestUrl = finalRequestUrl.replace(entry.getKey(), entry.getValue());
+		}
+		if (finalRequestUrl.startsWith("/")) {
+			finalRequestUrl = finalRequestUrl.substring(1);
+		}
+		log.debug("finalRequestUri:{}", finalRequestUrl);
+
+		//得到最终url
+		HttpUrl.Builder builder = getBuilder(url, path, finalRequestUrl, filterParam);
+		return builder.build().url();
   }
 
   /**
@@ -155,20 +177,20 @@ public class PipeService {
    * @param finalRequestUrl finalRequestUrl
    * @return HttpUrl.Builder
    */
-  private HttpUrl.Builder getBuilder(URL url, String path, String finalRequestUrl, Map<String, String[]> filterParam) {
-	HttpUrl.Builder builder = new HttpUrl.Builder();
-	builder.scheme(url.getProtocol());
-	builder.host(url.getHost());
-	builder.addPathSegments(path);
-	builder.addPathSegments(finalRequestUrl);
-	if (url.getPort() > 0) {
-	  builder.port(url.getPort());
-	}
-	filterParam.forEach((key, value) -> {
-	  log.debug("request params: {}: {}", key, value);
-	  builder.addQueryParameter(key, value[0]);
-	});
-	return builder;
+  public HttpUrl.Builder getBuilder(URL url, String path, String finalRequestUrl, Map<String, String[]> filterParam) {
+		HttpUrl.Builder builder = new HttpUrl.Builder();
+		builder.scheme(url.getProtocol());
+		builder.host(url.getHost());
+		builder.addPathSegments(path);
+		builder.addPathSegments(finalRequestUrl);
+		if (url.getPort() > 0) {
+			builder.port(url.getPort());
+		}
+		filterParam.forEach((key, value) -> {
+			log.debug("request params: {}: {}", key, value);
+			builder.addQueryParameter(key, value[0]);
+		});
+		return builder;
   }
 
   /**
@@ -177,7 +199,7 @@ public class PipeService {
    * @param urlModel   urlModel
    * @param requestUri requestUri
    */
-  private Map<String, String> getPathParamMap(String urlModel, String requestUri) {
+  public Map<String, String> getPathParamMap(String urlModel, String requestUri) {
 	if (urlModel.startsWith("/")) {
 	  urlModel = urlModel.substring(1);
 	}
@@ -234,108 +256,158 @@ public class PipeService {
    * @throws IOException      IOException
    * @throws GenericException GenericException
    */
-  private Object doRequestOkHttp(URI clientUri, HttpServletRequest request, Class controllerClass, Method method) throws IOException, URISyntaxException, GenericException {
-	objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-	//token
-	String token = String.format("Bearer %s", getRequestAuthorizationToken(request, controllerClass, method));
-	log.debug("request token: {}", token);
-	//authorization annotations
-	JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
-	SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
-	//request method
-	String requestMethod = request.getMethod();
-	//request body
-	RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), IOUtils.toByteArray(request.getReader()));
-	Request clientRequest = new Request.Builder()
-	  .url(clientUri.toURL())
-	  .header("Content-Type", StringUtils.isNoneBlank(request.getContentType()) ?
-		request.getContentType() : "application/json")
-	  .header("X-Real-IP", RequestHelper.getRealIp(request))    //加入客户端真实ip。
-	  .header("Accept", request.getHeader("Accept")).build();
-	//如果不存在JwtAuthorization或者SessionAuthorization配置，则不传token给内部服务
-	if (jwtAuthorization != null || sessionAuthorization != null) {
-	  clientRequest = clientRequest.newBuilder().header("Authorization", token).build();
-	}
-	if ("POST".equals(requestMethod)) {
-	  clientRequest = clientRequest.newBuilder().post(body).build();
-	} else if ("PUT".equals(requestMethod)) {
-	  clientRequest = clientRequest.newBuilder().put(body).build();
-	} else if ("DELETE".equals(requestMethod)) {
-	  clientRequest = clientRequest.newBuilder().delete(body).build();
-	}
-	Response clientResponse = okHttpClient.newCall(clientRequest).execute();
-	ResponseBody responseBody = clientResponse.body();
-	if (responseBody != null) {
-	  //如果接口的返回值不为void，则responseBody的内容应该依据返回值内部的字段进行过滤
-	  Class<?> returnType = method.getReturnType();
-	  if ("void".equals(returnType.getSimpleName())) {
-		log.debug("返回值类型: {}", returnType.getSimpleName());
-		return responseBody.string();
-	  } else {
-		//过滤参数信息并装配
-		if (!method.getReturnType().getSimpleName().contains("ResultWrapper")) {
-		  log.debug("不是ResultWrapper");
-		  return objectMapper.readValue(responseBody.string(), method.getReturnType());
-		}
-		//当返回值类型存在多层嵌套时
-		JavaType javaType = getJavaTypeByReturnType(method);
-		return objectMapper.readValue(responseBody.string(), javaType);
-	  }
-	} else if(clientResponse.isRedirect()){
-	  doRequestOkHttp(new URI(clientResponse.header("Location")), request, controllerClass, method);
-	} else{
-	  log.info("{} response is null. {}", requestMethod, clientUri);
-	}
-	return null;
-  }
+  public Object doRequestOkHttp(URI clientUri, HttpServletRequest request, HttpServletResponse response, List requestBody, Class controllerClass, Method method) throws IOException, URISyntaxException, GenericException {
+		//把http头部的token解码
+		String token = String.format("Bearer %s", getRequestAuthorizationToken(request, controllerClass, method));
+		log.debug("request token: {}", token);
 
-  private JavaType getJavaTypeByReturnType(Method method) {
-	ParameterizedType parameterizedType = (ParameterizedType) method.getGenericReturnType();
-	log.debug("parameterizedType={}", parameterizedType);
-	String[] typeStrings = parameterizedType.getTypeName().split("<");
-	//-------------------------如果没有ResultWrapper嵌套
-	log.debug("进入处理逻辑");
-	if ((!typeStrings[1].contains("List") && !typeStrings[1].contains("PagedResult"))) {
-	  log.debug("类型如ResultWrapper<Users>");
-	  return objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, (Class<?>) parameterizedType.getActualTypeArguments()[0]);
+		//查看是否有jwt注解或者session注解
+		JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
+		SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
+
+		//request method
+		String requestMethod = request.getMethod();
+
+		//构建一个request请求
+		RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), toByte(requestBody));
+		Request clientRequest = new Request.Builder()
+						.url(clientUri.toURL())
+						.header("Content-Type", StringUtils.isNoneBlank(request.getContentType()) ?
+										request.getContentType() : "application/json")
+						.header("X-Real-IP", RequestHelper.getRealIp(request))    //加入客户端真实ip。
+						.header("Accept", request.getHeader("Accept")).build();
+
+		//如果不存在JwtAuthorization或者SessionAuthorization配置，则不传token给内部服务
+		if (jwtAuthorization != null || sessionAuthorization != null) {
+			clientRequest = clientRequest.newBuilder().header("Authorization", token).build();
+		}
+
+		if ("POST".equals(requestMethod)) {
+			clientRequest = clientRequest.newBuilder().post(body).build();
+		} else if ("PUT".equals(requestMethod)) {
+			clientRequest = clientRequest.newBuilder().put(body).build();
+		} else if ("DELETE".equals(requestMethod)) {
+			clientRequest = clientRequest.newBuilder().delete(body).build();
+		}
+
+		Response clientResponse = okHttpClient.newCall(clientRequest).execute();
+
+		//根据response的code区分
+		if (clientResponse.code() == 200) {
+			return filterValue(clientResponse, response, method);
+		} else if (clientResponse.code() >= 500) {
+			//封装成ResultWrapper
+			ResultWrapper resultWrapper = new ResultWrapper();
+			resultWrapper.setCode(1000000);
+			//把异常信息写到message里
+			resultWrapper.setMessage(clientResponse.body().toString());
+		} else {
+			//其他结果，原样返回
+			setHeader("Location", response, clientResponse);
+			setHeader("Content-Type", response, clientResponse);
+			setHeader("Content-Disposition", response, clientResponse);
+			response.setStatus(clientResponse.code());
+		}
+		return null;
 	}
-	//---------------------------目前只剩List和PagedResult嵌套
-	log.debug("取得最内层Class过程");
-	Type globalType = parameterizedType.getActualTypeArguments()[0];
-	for (int i = 1; i < typeStrings.length - 1; i++) {
-	  log.debug("字符串数组当前值：{} ", typeStrings[i]);
-	  if (!typeStrings[i].contains("List") && !typeStrings[i].contains("PagedResult")) {
-		break;//当此处不再是List或ResultWrapper的时候，证明已经到末尾
-	  }
-	  if (typeStrings[i].contains("List")) {
-		globalType = ((ParameterizedTypeImpl) globalType).getActualTypeArguments()[0];
-		log.debug("list的泛型值为: {}", globalType);
-		continue;
-	  }
-	  globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
-	  log.debug("非List的泛型值为: {}", globalType);
+
+	public void setHeader(String header, HttpServletResponse response, Response clientResponse){
+  	String headerContent = null;
+  	if((headerContent = clientResponse.header(header))!=null && StringUtils.isNoneBlank(headerContent)){
+  		response.setHeader(header, headerContent);
+		}
 	}
-	log.debug("第一次装入:");
-	log.debug("字符串数组当前值: {}", typeStrings[typeStrings.length - 2]);
-	JavaType javaType = typeStrings[typeStrings.length - 2].contains("List") ?
-	  objectMapper.getTypeFactory().constructParametricType(List.class, (Class<?>) globalType) :
-	  objectMapper.getTypeFactory().constructParametricType(PagedResult.class, (Class<?>) globalType);
-	//最后装入阶段
-	log.debug("最后装入阶段:");
-	for (int i = typeStrings.length - 3; i >= 1; i--) {
-	  if (typeStrings[i].contains("PagedResult")) {
-		log.debug("嵌入PagedWrapper:");
-		javaType = objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, javaType);
-		continue;
-	  }
-	  log.debug("嵌入List:");
-	  javaType = objectMapper.getTypeFactory().constructParametricType(List.class, javaType);
+
+  public Object filterValue(Response clientResponse, HttpServletResponse response, Method method) throws IOException{
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		ResponseBody clientResponseBody = clientResponse.body();
+
+		if(clientResponse.header("Content-Type").contains("application/json")){
+			//如果是ResultWrapper，返回值过滤
+			JavaType javaType = getJavaTypeByReturnType(method);
+			return objectMapper.readValue(clientResponseBody.bytes(), javaType);
+		}else {
+			//如果不是json，直接返回
+			//得到文件名
+			if(method.getAnnotation(Filename.class)!=null){
+				filename = method.getAnnotation(Filename.class).value();
+			}
+			response.setHeader("Content-disposition", "attachment;filename="+filename);
+			IOUtils.copy(clientResponseBody.byteStream(), response.getOutputStream());
+			return null;
+		}
 	}
-	//最后将结果嵌套嵌入ResultWrapper
-	log.debug("嵌入ResultWrapper:");
-	javaType = objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, javaType);
-	return javaType;
-  }
+
+  public JavaType getJavaTypeByReturnType(Method method) {
+		ParameterizedType parameterizedType = (ParameterizedType) method.getGenericReturnType();
+		log.debug("parameterizedType={}", parameterizedType);
+
+		//把嵌套的类型分割开来
+		String[] typeStrings = parameterizedType.getTypeName().split("<");
+
+		if (typeStrings[0].contains("ResultWrapper")) {
+			log.debug("类型是ResultWrapper<>");
+
+			//globalType可能是基本类型,POJO,PagedResult,ListResult
+			Type globalType = parameterizedType.getActualTypeArguments()[0];
+
+			int i = 0;
+			for (i = 1; i < typeStrings.length; i++) {
+				log.debug("字符串数组当前值：{} ", typeStrings[i]);
+
+				if (typeStrings[i].contains("ListResult")) {
+					globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
+					log.debug("第" + i + "层，ListResult的泛型值为: {}", globalType);
+				} else if (typeStrings[i].contains("PagedResult")) {
+					globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
+					log.debug("第" + i + "层，PagedResult泛型值为: {}", globalType);
+				} else if (typeStrings[i].contains("List")) {
+					globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
+					log.debug("第" + i + "层，List的泛型值为: {}", globalType);
+				} else {
+					//当此处不再是ListResult或PagedResult或List的时候，证明已经到末尾
+					break;
+				}
+			}
+
+			log.debug("first load");
+			JavaType javaType = null;
+			String type = typeStrings[typeStrings.length - 2];
+			log.debug("字符串数组当前值: {}", typeStrings[i]);
+
+			if (type.contains("ListResult")) {
+				javaType = objectMapper.getTypeFactory().constructParametricType(ListResult.class, (Class<?>) globalType);
+			} else if (type.contains("PagedResult")) {
+				javaType = objectMapper.getTypeFactory().constructParametricType(PagedResult.class, (Class<?>) globalType);
+			} else if (type.contains("List")) {
+				javaType = objectMapper.getTypeFactory().constructParametricType(List.class, (Class<?>) globalType);
+			}
+
+			log.debug("second load");
+			for (int j = typeStrings.length - 3; j > 0; j--) {
+				if (typeStrings[j].contains("PagedResult")) {
+					log.debug("嵌入PagedResult:");
+					javaType = objectMapper.getTypeFactory().constructParametricType(PagedResult.class, javaType);
+				} else if (typeStrings[j].contains("ListResult")) {
+					log.debug("嵌入ListResult:");
+					javaType = objectMapper.getTypeFactory().constructParametricType(ListResult.class, javaType);
+				} else {
+					log.debug("嵌入List:");
+					javaType = objectMapper.getTypeFactory().constructParametricType(List.class, javaType);
+				}
+			}
+
+			//最后将结果嵌套嵌入ResultWrapper
+			log.debug("final load");
+			if(javaType == null){
+				javaType = objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, (Class<?>)globalType);
+			}else {
+				javaType = objectMapper.getTypeFactory().constructParametricType(ResultWrapper.class, javaType);
+			}
+			return javaType;
+		}
+		return null;
+	}
 
   /**
    * 解密, 加密token信息
@@ -346,7 +418,7 @@ public class PipeService {
    * @return token
    * @throws UnsupportedEncodingException UnsupportedEncodingException
    */
-  private String getRequestAuthorizationToken(HttpServletRequest request, Class controllerClass, Method method) throws UnsupportedEncodingException {
+  public String getRequestAuthorizationToken(HttpServletRequest request, Class controllerClass, Method method) throws UnsupportedEncodingException {
 	JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
 	SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
 	String authorizationToken = request.getHeader("Authorization");
@@ -389,4 +461,17 @@ public class PipeService {
 	builder.withIssuedAt(new Date());
 	return builder.sign(algorithm);
   }
+
+	private byte[] toByte(List requestBodyList) {
+  	if(requestBodyList.size() == 0){return new byte[0];}
+		StringBuilder strb = new StringBuilder();
+		for (Object o : requestBodyList) {
+			try {
+				strb.append(objectMapper.writeValueAsString(o));
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		}
+		return new String(strb).getBytes();
+	}
 }

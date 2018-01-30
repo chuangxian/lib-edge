@@ -8,7 +8,7 @@
         <maxPacketSize>1024</maxPacketSize>
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
             <layout class="me.moocar.logbackgelf.GelfLayout">
-                <host>${LOGGING_CONFIG_SOURCE}</host>
+                <host>wechat-service</host>
                 <fullMessageLayout class="ch.qos.logback.classic.PatternLayout">
                     <pattern>${FILE_LOG_PATTERN}</pattern>
                 </fullMessageLayout>

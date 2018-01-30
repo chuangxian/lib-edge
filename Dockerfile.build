@@ -1,0 +1,5 @@
+FROM daocloud.io/myzd/gradle-builder:v20170324
+MAINTAINER Yuanhai He <i@bestmike007.com>
+
+COPY . /srv
+RUN env && cd /srv && ls -al && sed -i 's/.*maven\.aliyun\.com.*/  mavenCentral()/g' build.gradle && gradle build

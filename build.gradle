@@ -14,7 +14,7 @@ apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 
 jar {
-  baseName = 'myzd-common-edge-gateway'
+  baseName = 'java-demo'
   version = '0.0.1-SNAPSHOT'
 }
 sourceCompatibility = 1.8
@@ -50,4 +50,6 @@ dependencies {
   compile "org.springframework.session:spring-session-data-redis"
   compile "org.springframework.security:spring-security-core"
   compile group: 'commons-io', name: 'commons-io', version: '2.4'
+  compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
+    compile (group:'org.jodd', name:'jodd', version:'3.4.1')
 }
