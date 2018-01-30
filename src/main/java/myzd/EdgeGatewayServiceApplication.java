@@ -16,4 +16,5 @@ public class EdgeGatewayServiceApplication {
   public static void main(String[] args) {
     SpringApplication.run(EdgeGatewayServiceApplication.class, args);
   }
+
 }
