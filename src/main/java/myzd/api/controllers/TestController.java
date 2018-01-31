@@ -17,6 +17,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ public class TestController {
 					@PathVariable("id")
 					Long id
 	) {
+		Map<String, String> map = new HashMap<>();
 		return null;
 	}
 
@@ -93,7 +95,7 @@ public class TestController {
 
 	@PipeConfig
 	@GetMapping("/test/list/map")
-	public ResultWrapper<ListResult<Map<String, String>>> listMapTest(){
+	public ResultWrapper<ListResult<HashMap<String, String>>> listMapTest(){
 		return null;
 	}
 

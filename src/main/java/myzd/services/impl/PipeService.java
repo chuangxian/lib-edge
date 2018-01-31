@@ -129,7 +129,7 @@ public class PipeService {
 		//得到方法上的@PipeConfig.clientUrl（选填）
 		PipeConfig pipeConfig = method.getAnnotation(PipeConfig.class);
 		if (pipeConfig != null && StringUtils.isNoneBlank(pipeConfig.clientUrl())) {
-			finalRequestUrl = pipeConfig.clientUrl();
+			finalRequestUrl = env.resolvePlaceholders(pipeConfig.clientUrl());
 		}
 
 		//得到要透传的服务的host
@@ -330,7 +330,7 @@ public class PipeService {
 			//如果不是json，直接返回
 			//得到文件名
 			if(method.getAnnotation(Filename.class)!=null){
-				filename = method.getAnnotation(Filename.class).value();
+				filename = env.resolvePlaceholders(method.getAnnotation(Filename.class).value());
 			}
 			response.setHeader("Content-disposition", "attachment;filename="+filename);
 			IOUtils.copy(clientResponseBody.byteStream(), response.getOutputStream());
@@ -372,7 +372,10 @@ public class PipeService {
 
 			log.debug("first load");
 			JavaType javaType = null;
-			String type = typeStrings[typeStrings.length - 2];
+			if(i-1<0){
+				throw new RuntimeException("返回格式应该是ResultWrapper");
+			}
+			String type = typeStrings[i-1];
 			log.debug("字符串数组当前值: {}", typeStrings[i]);
 
 			if (type.contains("ListResult")) {

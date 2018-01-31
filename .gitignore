@@ -28,3 +28,4 @@ nbdist/
 .nb-gradle/
 src/main/resources/application-local.properties
 .DS_Store
+*/.DS_Store
