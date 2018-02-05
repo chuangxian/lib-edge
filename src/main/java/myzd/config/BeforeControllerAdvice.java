@@ -57,8 +57,6 @@ public class BeforeControllerAdvice {
   private Environment environment;
   @Autowired
   private TaskExecutor kafkaMsgExecutor;
-  @Autowired
-  private CheckContentType checkContentType;
 
   private ThreadLocal<Long> startTime = new ThreadLocal<>();
   private ThreadLocal<Map<String, String>> requestInfo = new ThreadLocal<>();
@@ -100,7 +98,7 @@ public class BeforeControllerAdvice {
     ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
     HttpServletRequest request = attributes.getRequest();
     //检查contentType类型
-    if(!checkContentType.checkRequestContentType(request)){
+    if(!checkRequestContentType(request)){
       ResultWrapper resultWrapper = new ResultWrapper();
       resultWrapper.setCode(200);
       resultWrapper.setMessage("invalid request format");
@@ -159,6 +157,18 @@ public class BeforeControllerAdvice {
     log.debug("penetration response: {}", object);
 
     return object;
+  }
+
+  private boolean checkRequestContentType(HttpServletRequest request){
+    if(request.getMethod().equals("POST") ||
+            request.getMethod().equals("PUT") ||
+            request.getMethod().equals("PATCH")){
+      if(request.getHeader("Content-Type").equals("application/json")){
+        return true;
+      }
+      return false;
+    }
+    return true;
   }
 
   @AfterReturning(returning = "response", pointcut = "init()")

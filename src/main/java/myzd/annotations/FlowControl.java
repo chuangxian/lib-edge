@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 public @interface FlowControl {
 
   /**
-   * 一秒内可访问次数
+   * 一秒钟内可访问次数
    */
   int secondTimes() default -1;
 

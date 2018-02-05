@@ -79,7 +79,7 @@ public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
           );
           response.addHeader(
             "Access-Control-Allow-Headers",
-            "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Authorization"
+            "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Authentication"
           );
           response.addHeader(
             "Access-Control-Allow-Methods",

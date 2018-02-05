@@ -93,13 +93,13 @@ public class FlowControlService {
         flowContorl.setHourTimes(requestTimestamp - flowContorl.getTimestamp() < 3600000 ? flowContorl.getHourTimes() + 1 : 1);
         flowContorl.setDayTimes(requestTimestamp - flowContorl.getTimestamp() < 86400000 ? flowContorl.getDayTimes() + 1 : 1);
         if ((secondTimes > 0 && flowContorl.getSecondTimes() > secondTimes) ||
-          (minuteTimes > 0 && flowContorl.getMinuteTimes() > minuteTimes) ||
-          (hourTimes > 0 && flowContorl.getHourTimes() > hourTimes) ||
-          (dayTimes > 0 && flowContorl.getDayTimes() > dayTimes)
-          ) {
+                (minuteTimes > 0 && flowContorl.getMinuteTimes() > minuteTimes) ||
+                (hourTimes > 0 && flowContorl.getHourTimes() > hourTimes) ||
+                (dayTimes > 0 && flowContorl.getDayTimes() > dayTimes)
+                ) {
           log.debug("too many exception. limit: {}, {}, {}, {}; fact: {}, {}, {}, {}",
-            secondTimes, minuteTimes, hourTimes, dayTimes,
-            flowContorl.getSecondTimes(), flowContorl.getMinuteTimes(), flowContorl.getHourTimes(), flowContorl.getDayTimes()
+                  secondTimes, minuteTimes, hourTimes, dayTimes,
+                  flowContorl.getSecondTimes(), flowContorl.getMinuteTimes(), flowContorl.getHourTimes(), flowContorl.getDayTimes()
           );
           throw new TooManyRequestsException("too many requests exception.");
         }

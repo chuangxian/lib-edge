@@ -86,5 +86,4 @@ public class RedisSessionConfiguration {
     defaultCookieSerializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
     return defaultCookieSerializer;
   }
-
 }

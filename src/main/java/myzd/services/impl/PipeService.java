@@ -9,10 +9,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import myzd.annotations.Filename;
-import myzd.annotations.JwtAuthorization;
-import myzd.annotations.PipeConfig;
-import myzd.annotations.SessionAuthorization;
+import myzd.annotations.*;
 import myzd.domain.exceptions.GenericException;
 import myzd.domain.request.ListResult;
 import myzd.domain.request.PagedResult;
@@ -52,15 +49,14 @@ public class PipeService {
   private final Environment env;
   private final OkHttpClient okHttpClient;
   private final ObjectMapper objectMapper;
-
-  @Value("${filename}")
-  private String filename;
+  private JwtService jwtService;
 
   @Autowired
-  public PipeService(Environment env, OkHttpClient okHttpClient, ObjectMapper objectMapper) {
+  public PipeService(Environment env, OkHttpClient okHttpClient, ObjectMapper objectMapper, JwtService jwtService) {
 		this.env = env;
 		this.okHttpClient = okHttpClient;
 		this.objectMapper = objectMapper;
+		this.jwtService = jwtService;
   }
 
   public Object penetrate(HttpServletRequest request, HttpServletResponse response, Method method, List requestBody, Class controllerClass, Map<String, String[]> filterParam) throws GenericException {
@@ -85,7 +81,7 @@ public class PipeService {
    * @param method method
    * @return String
    */
-  public String getMappingUrl(String requestMethod, Method method) {
+	private String getMappingUrl(String requestMethod, Method method) {
 	String[] mappingValue;
 	switch (requestMethod) {
 	  case "POST":
@@ -114,7 +110,7 @@ public class PipeService {
    * @return URI
    * @throws URISyntaxException exception
    */
-  public URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
+	private URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
 					throws URISyntaxException, UnsupportedEncodingException, MalformedURLException, GenericException {
 
   	//得到controller类上的@PipeConfig.clientHost
@@ -177,7 +173,7 @@ public class PipeService {
    * @param finalRequestUrl finalRequestUrl
    * @return HttpUrl.Builder
    */
-  public HttpUrl.Builder getBuilder(URL url, String path, String finalRequestUrl, Map<String, String[]> filterParam) {
+	private HttpUrl.Builder getBuilder(URL url, String path, String finalRequestUrl, Map<String, String[]> filterParam) {
 		HttpUrl.Builder builder = new HttpUrl.Builder();
 		builder.scheme(url.getProtocol());
 		builder.host(url.getHost());
@@ -199,7 +195,7 @@ public class PipeService {
    * @param urlModel   urlModel
    * @param requestUri requestUri
    */
-  public Map<String, String> getPathParamMap(String urlModel, String requestUri) {
+	private Map<String, String> getPathParamMap(String urlModel, String requestUri) {
 	if (urlModel.startsWith("/")) {
 	  urlModel = urlModel.substring(1);
 	}
@@ -256,17 +252,11 @@ public class PipeService {
    * @throws IOException      IOException
    * @throws GenericException GenericException
    */
-  public Object doRequestOkHttp(URI clientUri, HttpServletRequest request, HttpServletResponse response, List requestBody, Class controllerClass, Method method) throws IOException, URISyntaxException, GenericException {
+	private Object doRequestOkHttp(URI clientUri, HttpServletRequest request, HttpServletResponse response, List requestBody, Class controllerClass, Method method)
+					throws IOException, URISyntaxException, GenericException {
 		//把http头部的token解码
 		String token = String.format("Bearer %s", getRequestAuthorizationToken(request, controllerClass, method));
 		log.debug("request token: {}", token);
-
-		//查看是否有jwt注解或者session注解
-		JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
-		SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
-
-		//request method
-		String requestMethod = request.getMethod();
 
 		//构建一个request请求
 		RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), toByte(requestBody));
@@ -277,10 +267,13 @@ public class PipeService {
 						.header("X-Real-IP", RequestHelper.getRealIp(request))    //加入客户端真实ip。
 						.header("Accept", request.getHeader("Accept")).build();
 
-		//如果不存在JwtAuthorization或者SessionAuthorization配置，则不传token给内部服务
-		if (jwtAuthorization != null || sessionAuthorization != null) {
+		//如果不存在@Authentication，则不传token给内部服务
+		if (method.getAnnotation(Authentication.class) != null) {
 			clientRequest = clientRequest.newBuilder().header("Authorization", token).build();
 		}
+
+		//得到请求的方法
+		String requestMethod = request.getMethod();
 
 		if ("POST".equals(requestMethod)) {
 			clientRequest = clientRequest.newBuilder().post(body).build();
@@ -296,11 +289,8 @@ public class PipeService {
 		if (clientResponse.code() == 200) {
 			return filterValue(clientResponse, response, method);
 		} else if (clientResponse.code() >= 500) {
-			//封装成ResultWrapper
-			ResultWrapper resultWrapper = new ResultWrapper();
-			resultWrapper.setCode(1000000);
-			//把异常信息写到message里
-			resultWrapper.setMessage(clientResponse.body().toString());
+			//封装成ResultWrapper，错误信息写在message里
+			return new ResultWrapper<String>(1000000, clientResponse.body().toString(), null);
 		} else {
 			//其他结果，原样返回
 			setHeader("Location", response, clientResponse);
@@ -311,34 +301,45 @@ public class PipeService {
 		return null;
 	}
 
-	public void setHeader(String header, HttpServletResponse response, Response clientResponse){
+	private void setHeader(String header, HttpServletResponse response, Response clientResponse){
   	String headerContent = null;
   	if((headerContent = clientResponse.header(header))!=null && StringUtils.isNoneBlank(headerContent)){
   		response.setHeader(header, headerContent);
 		}
 	}
 
-  public Object filterValue(Response clientResponse, HttpServletResponse response, Method method) throws IOException{
+	private Object filterValue(Response clientResponse, HttpServletResponse response, Method method) throws IOException, GenericException{
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		ResponseBody clientResponseBody = clientResponse.body();
 
+		//分两种情况：json和文件
 		if(clientResponse.header("Content-Type").contains("application/json")){
 			//如果是ResultWrapper，返回值过滤
 			JavaType javaType = getJavaTypeByReturnType(method);
 			return objectMapper.readValue(clientResponseBody.bytes(), javaType);
 		}else {
 			//如果不是json，直接返回
-			//得到文件名
-			if(method.getAnnotation(Filename.class)!=null){
-				filename = env.resolvePlaceholders(method.getAnnotation(Filename.class).value());
+			if(response == null){
+				throw new GenericException("1000000", "参数中不存在HttpServletResponse");
 			}
-			response.setHeader("Content-disposition", "attachment;filename="+filename);
+
+			//替换头部内容
+			SetHttpHeader setHttpHeader = null;
+			if((setHttpHeader = method.getAnnotation(SetHttpHeader.class))!=null){
+				if(setHttpHeader.header().length!=setHttpHeader.value().length){
+					throw new GenericException("1000000", "@SetHttpHeader中参数数量不正确");
+				}
+				for(int i = 0; i<setHttpHeader.header().length; i++){
+					response.setHeader(setHttpHeader.header()[i], setHttpHeader.value()[i]);
+				}
+			}
+
 			IOUtils.copy(clientResponseBody.byteStream(), response.getOutputStream());
 			return null;
 		}
 	}
 
-  public JavaType getJavaTypeByReturnType(Method method) {
+  private JavaType getJavaTypeByReturnType(Method method) throws GenericException{
 		ParameterizedType parameterizedType = (ParameterizedType) method.getGenericReturnType();
 		log.debug("parameterizedType={}", parameterizedType);
 
@@ -373,11 +374,13 @@ public class PipeService {
 			log.debug("first load");
 			JavaType javaType = null;
 			if(i-1<0){
-				throw new RuntimeException("返回格式应该是ResultWrapper");
+				throw new GenericException("1000000", "返回格式应该是ResultWrapper");
 			}
 			String type = typeStrings[i-1];
 			log.debug("字符串数组当前值: {}", typeStrings[i]);
-
+			if(globalType instanceof ParameterizedType){
+				globalType = ((ParameterizedType)globalType).getActualTypeArguments()[0];
+			}
 			if (type.contains("ListResult")) {
 				javaType = objectMapper.getTypeFactory().constructParametricType(ListResult.class, (Class<?>) globalType);
 			} else if (type.contains("PagedResult")) {
@@ -421,48 +424,39 @@ public class PipeService {
    * @return token
    * @throws UnsupportedEncodingException UnsupportedEncodingException
    */
-  public String getRequestAuthorizationToken(HttpServletRequest request, Class controllerClass, Method method) throws UnsupportedEncodingException {
-	JwtAuthorization jwtAuthorization = method.getAnnotation(JwtAuthorization.class);
-	SessionAuthorization sessionAuthorization = method.getAnnotation(SessionAuthorization.class);
-	String authorizationToken = request.getHeader("Authorization");
-	log.debug("authorizationToken: {}", authorizationToken);
-	String token = null;
-	if (StringUtils.isNoneBlank(authorizationToken) && authorizationToken.startsWith("Bearer ")) {
-	  token = authorizationToken.substring(7);
-	}
-	//若两个authorization注解都为空, 则不需要token
-	if (jwtAuthorization == null && sessionAuthorization == null) {
-	  return token;
-	}
-	PipeConfig controllerConfig = (PipeConfig) controllerClass.getAnnotation(PipeConfig.class);
-	PipeConfig actionConfig = method.getAnnotation(PipeConfig.class);
-	Map<String, String> userIdentityMap = new HashMap<>();
-	//若jwtAuthorization不为空则需要解密header内容
-	if (jwtAuthorization != null && token != null && StringUtils.isNoneBlank(token)) {
-	  //解密
-	  String envDecryption = StringUtils.isNoneBlank(controllerConfig.envDecryption()) ? controllerConfig.envDecryption() : actionConfig.envDecryption();
-	  Algorithm algorithm = Algorithm.HMAC256(env.getProperty(envDecryption));
-	  log.debug("token: {}", token);
-	  DecodedJWT body = JWT.require(algorithm).acceptIssuedAt(300).build().verify(token);
-	  body.getClaims().forEach((key, value) -> userIdentityMap.put(key, value.asString()));
-	}
-	if (sessionAuthorization != null) {
-	  HttpSession httpSession = request.getSession();
-	  Enumeration<String> sessionAttributeNames = httpSession.getAttributeNames();
-	  for (Enumeration e = sessionAttributeNames; e.hasMoreElements(); ) {
-		String key = e.nextElement().toString();
-		String value = String.valueOf(httpSession.getAttribute(key));
-		userIdentityMap.put(key, value);
-	  }
-	}
-	//加密
-	String envEncryption = StringUtils.isNoneBlank(controllerConfig.envEncryption()) ? controllerConfig.envEncryption() : actionConfig.envEncryption();
-	Algorithm algorithm = Algorithm.HMAC256(env.getProperty(envEncryption));
-	JWTCreator.Builder builder = JWT.create();
-	log.debug("userIdentityMap: {}", userIdentityMap);
-	userIdentityMap.forEach(builder::withClaim);
-	builder.withIssuedAt(new Date());
-	return builder.sign(algorithm);
+  private String getRequestAuthorizationToken(HttpServletRequest request, Class controllerClass, Method method)
+					throws UnsupportedEncodingException, GenericException{
+
+		Authentication authentication = method.getAnnotation(Authentication.class) == null?
+						(Authentication)controllerClass.getAnnotation(Authentication.class):
+						method.getAnnotation(Authentication.class);
+
+		//若@authorization为空, 则不需要token
+		if(authentication == null){
+			return null;
+		}
+
+		//若@authorization不为空得到头部内容
+		String authorizationToken = request.getHeader("Authorization");
+		log.debug("authorizationToken: {}", authorizationToken);
+
+		Map<String, String> userIdentityMap = new HashMap<>();
+
+		if(authentication.mode() == Authentication.Mode.JWT){
+			userIdentityMap = jwtService.decodeJwt(authorizationToken, authentication);
+		} else{
+			//信息放在session里面了
+			HttpSession httpSession = request.getSession();
+			Enumeration<String> sessionAttributeNames = httpSession.getAttributeNames();
+			for (Enumeration e = sessionAttributeNames; e.hasMoreElements(); ) {
+				String key = e.nextElement().toString();
+				String value = String.valueOf(httpSession.getAttribute(key));
+				userIdentityMap.put(key, value);
+			}
+		}
+
+		//得到了userIdentityMap，加密后返回
+		return jwtService.encodeJwt(userIdentityMap, authentication);
   }
 
 	private byte[] toByte(List requestBodyList) {
