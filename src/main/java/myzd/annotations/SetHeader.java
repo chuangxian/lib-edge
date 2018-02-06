@@ -9,10 +9,9 @@ import java.util.Map;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SetHttpHeader {
+public @interface SetHeader {
 
-	String[] header();
-
+	//格式 key:value
 	String[] value();
 
 }

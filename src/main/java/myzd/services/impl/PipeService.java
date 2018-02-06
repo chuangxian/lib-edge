@@ -1,9 +1,5 @@
 package myzd.services.impl;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
@@ -19,14 +15,12 @@ import okhttp3.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -66,10 +60,14 @@ public class PipeService {
 	  if ("OPTIONS".equals(requestMethod)) {
 			return null;
 	  }
+
+	  //得到@RequestMapping注解里的路径
 	  String mappingUrl = getMappingUrl(requestMethod, method);
+	  //
 	  URL clientUrl = getRequestUri(request, method, controllerClass, mappingUrl, filterParam);
 	  log.debug("clientUrl:{}", clientUrl);
-	  //得到返回内容
+
+	  //发起请求，返回response
 	  return doRequestOkHttp(clientUrl.toURI(), request, response, requestBody, controllerClass, method);
 	} catch (IOException | URISyntaxException e) {
 	  e.printStackTrace();
@@ -78,6 +76,7 @@ public class PipeService {
   }
 
   /**
+	 * 得到@RequestMapping注解里的路径
    * @param method method
    * @return String
    */
@@ -85,21 +84,21 @@ public class PipeService {
 	String[] mappingValue;
 	switch (requestMethod) {
 	  case "POST":
-		PostMapping postMapping = method.getAnnotation(PostMapping.class);
-		mappingValue = postMapping.value().length != 0 ? postMapping.value() : postMapping.path();
-		break;
+			PostMapping postMapping = method.getAnnotation(PostMapping.class);
+			mappingValue = postMapping.value().length != 0 ? postMapping.value() : postMapping.path();
+			break;
 	  case "PUT":
-		PutMapping putMapping = method.getAnnotation(PutMapping.class);
-		mappingValue = putMapping.value().length != 0 ? putMapping.value() : putMapping.path();
-		break;
+			PutMapping putMapping = method.getAnnotation(PutMapping.class);
+			mappingValue = putMapping.value().length != 0 ? putMapping.value() : putMapping.path();
+			break;
 	  case "DELETE":
-		DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
-		mappingValue = deleteMapping.value().length != 0 ? deleteMapping.value() : deleteMapping.path();
-		break;
+			DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
+			mappingValue = deleteMapping.value().length != 0 ? deleteMapping.value() : deleteMapping.path();
+			break;
 	  default:
-		GetMapping getMapping = method.getAnnotation(GetMapping.class);
-		mappingValue = getMapping.value().length != 0 ? getMapping.value() : getMapping.path();
-		break;
+			GetMapping getMapping = method.getAnnotation(GetMapping.class);
+			mappingValue = getMapping.value().length != 0 ? getMapping.value() : getMapping.path();
+			break;
 	}
 	return mappingValue[0];
   }
@@ -113,7 +112,7 @@ public class PipeService {
 	private URL getRequestUri(HttpServletRequest request, Method method, Class controllerClass, String mappingUrl, Map<String, String[]> filterParam)
 					throws URISyntaxException, UnsupportedEncodingException, MalformedURLException, GenericException {
 
-  	//得到controller类上的@PipeConfig.clientHost
+  	//得到controller类上的@PipeConfig
   	PipeConfig controllerPipeConfig = (PipeConfig) controllerClass.getAnnotation(PipeConfig.class);
 
   	//得到http请求内的uri
@@ -324,13 +323,11 @@ public class PipeService {
 			}
 
 			//替换头部内容
-			SetHttpHeader setHttpHeader = null;
-			if((setHttpHeader = method.getAnnotation(SetHttpHeader.class))!=null){
-				if(setHttpHeader.header().length!=setHttpHeader.value().length){
-					throw new GenericException("1000000", "@SetHttpHeader中参数数量不正确");
-				}
-				for(int i = 0; i<setHttpHeader.header().length; i++){
-					response.setHeader(setHttpHeader.header()[i], setHttpHeader.value()[i]);
+			SetHeader setHeader = null;
+			if((setHeader = method.getAnnotation(SetHeader.class))!=null){
+				for(String value:setHeader.value()){
+					String[] header = value.split(":", 2);
+					response.setHeader(header[0], header[1]);
 				}
 			}
 
