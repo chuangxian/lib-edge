@@ -1,0 +1,4 @@
+rootProject.name = 'lib-edge'
+
+include 'library'
+include 'demo'
