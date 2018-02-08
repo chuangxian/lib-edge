@@ -12,53 +12,53 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by admin on 2017/7/27.
+ * @author Created by admin on 2017/7/27.
  */
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class UserPermission implements UserDetails{
+public class UserPermission implements UserDetails {
 
-  private String username;
-  private List<String> authority;
+	private String id;
+	private List<String> roles;
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    List<GrantedAuthority> auths = new ArrayList<>();
-    List<String> authoritys = this.getAuthority();
-    for (String auth : authoritys) {
-      auths.add(new SimpleGrantedAuthority(auth));
-    }
-    return auths;
-  }
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		List<GrantedAuthority> roles = new ArrayList<>();
+		List<String> roleList = this.getRoles();
+		for (String role : roleList) {
+			roles.add(new SimpleGrantedAuthority(role));
+		}
+		return roles;
+	}
 
-  @Override
-  public String getPassword() {
-    return null;
-  }
+	@Override
+	public String getPassword() {
+		return null;
+	}
 
-  @Override
-  public String getUsername() {
-    return username;
-  }
+	@Override
+	public String getUsername() {
+		return id;
+	}
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return false;
-  }
+	@Override
+	public boolean isAccountNonExpired() {
+		return false;
+	}
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return false;
-  }
+	@Override
+	public boolean isAccountNonLocked() {
+		return false;
+	}
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return false;
-  }
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return false;
+	}
 
-  @Override
-  public boolean isEnabled() {
-    return false;
-  }
+	@Override
+	public boolean isEnabled() {
+		return false;
+	}
 }

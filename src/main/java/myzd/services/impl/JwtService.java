@@ -5,26 +5,30 @@ import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
-import myzd.annotations.Authentication;
 import myzd.domain.exceptions.GenericException;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import sun.tools.java.Environment;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author yrw
+ */
 @Component
 @Slf4j
 public class JwtService {
 
-	@Autowired
-	private org.springframework.core.env.Environment env;
+	@Value("${jwt.algorithm}")
+	private String jwtAlgorithm;
 
-	public Map<String, String> decodeJwt(String authorizationToken, Authentication authentication)
+	@Value("${jwt.secret.envDecryption}")
+	private String envDecryption;
+
+	public Map<String, String> decodeJwt(String authorizationToken)
 					throws GenericException, UnsupportedEncodingException {
 
 		String token = null;
@@ -34,14 +38,12 @@ public class JwtService {
 			throw new GenericException("1000000", "token格式不正确");
 		}
 
-		Map<String, String> userIdentityMap = new HashMap<>();
+		Map<String, String> userIdentityMap = new HashMap<>(16);
 
 		//解密header内容
 		if (token != null && StringUtils.isNoneBlank(token)) {
-			//得到面向edge的密钥
-			String envDecryption = env.resolvePlaceholders(authentication.envDecryption());
 			//解密的算法
-			Algorithm algorithm = getAlgorithm(authentication, envDecryption);
+			Algorithm algorithm = getAlgorithm(jwtAlgorithm, envDecryption);
 			log.debug("token: {}", token);
 
 			DecodedJWT body = JWT.require(algorithm).acceptIssuedAt(300).build().verify(token);
@@ -50,25 +52,23 @@ public class JwtService {
 		return userIdentityMap;
 	}
 
-	public String encodeJwt(Map<String, String> userIdentityMap, Authentication authentication)
-					throws UnsupportedEncodingException{
+	public String encodeJwt(Map<String, String> userIdentityMap, String envEncryption)
+					throws UnsupportedEncodingException {
 		//得到面向service的密钥
-		String envEncryption = env.resolvePlaceholders(authentication.envEncryption());
-
 		//把userIdentity内容加密
-		log.debug("userIdentityMap: {}", userIdentityMap);
-
-		Algorithm algorithm = getAlgorithm(authentication, envEncryption);
+		Algorithm algorithm = getAlgorithm(jwtAlgorithm, envEncryption);
 		JWTCreator.Builder builder = JWT.create();
 		userIdentityMap.forEach(builder::withClaim);
 		builder.withIssuedAt(new Date());
 		return builder.sign(algorithm);
 	}
 
-	private Algorithm getAlgorithm(Authentication authentication, String secret) throws UnsupportedEncodingException {
-		switch (authentication.algorithm()){
-			case HS256: return Algorithm.HMAC256(secret);
-			default: return Algorithm.HMAC256(secret);
+	private Algorithm getAlgorithm(String algorithm, String secret) throws UnsupportedEncodingException {
+		switch (algorithm) {
+			case "HS256":
+				return Algorithm.HMAC256(secret);
+			default:
+				return Algorithm.HMAC256(secret);
 		}
 	}
 }

@@ -22,35 +22,35 @@ import java.util.Date;
 @Slf4j
 public class PipeKafkaService {
 
-  @Autowired
-  private KafkaTemplate<String, String> kafkaTemplate;
-  @Autowired
-  private ObjectMapper objectMapper;
+	@Autowired
+	private KafkaTemplate<String, String> kafkaTemplate;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-  public void sendMessage(String topic, String message) throws IOException {
-    log.debug("send kafka message. topic: {}, message: {}, date: {}", topic, message, new Date());
-    try {
-      ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(
-        topic,
-        objectMapper.writeValueAsString(ImmutableMap.of(
-          "ts", String.valueOf(System.currentTimeMillis()),
-          "message", message
-        )));
-      future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
-        @Override
-        public void onSuccess(SendResult<String, String> result) {
-        }
+	public void sendMessage(String topic, String message) throws IOException {
+		log.debug("send kafka message. topic: {}, message: {}, date: {}", topic, message, new Date());
+		try {
+			ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(
+							topic,
+							objectMapper.writeValueAsString(ImmutableMap.of(
+											"ts", String.valueOf(System.currentTimeMillis()),
+											"message", message
+							)));
+			future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
+				@Override
+				public void onSuccess(SendResult<String, String> result) {
+				}
 
-        @Override
-        public void onFailure(Throwable ex) {
-          log.error("Fail to send message to message queue.", message, ex);
-        }
-      });
-    } catch (JsonProcessingException e) {
-      log.error("Unexpected parsing error when writing kafka message to message queue.", e);
-    } catch (NullPointerException e) {
-      log.error("send kafka message error.", e);
-    }
-  }
+				@Override
+				public void onFailure(Throwable ex) {
+					log.error("Fail to send message to message queue.", message, ex);
+				}
+			});
+		} catch (JsonProcessingException e) {
+			log.error("Unexpected parsing error when writing kafka message to message queue.", e);
+		} catch (NullPointerException e) {
+			log.error("send kafka message error.", e);
+		}
+	}
 
 }

@@ -13,24 +13,24 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FlowControl {
 
-  /**
-   * 一秒钟内可访问次数
-   */
-  int secondTimes() default -1;
+	/**
+	 * 一秒钟内可访问次数
+	 */
+	int secondTimes() default -1;
 
-  /**
-   * 一分钟内可访问次数
-   */
-  int minuteTimes() default -1;
+	/**
+	 * 一分钟内可访问次数
+	 */
+	int minuteTimes() default -1;
 
-  /**
-   * 一小时内可访问次数
-   */
-  int hourTimes() default -1;
+	/**
+	 * 一小时内可访问次数
+	 */
+	int hourTimes() default -1;
 
-  /**
-   * 一天内可访问次数
-   */
-  int dayTimes() default -1;
+	/**
+	 * 一天内可访问次数
+	 */
+	int dayTimes() default -1;
 
 }

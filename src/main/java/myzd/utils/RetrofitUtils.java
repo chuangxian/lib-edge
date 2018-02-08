@@ -6,7 +6,7 @@ import myzd.domain.request.ResultWrapper;
 import retrofit2.Response;
 
 /**
- * Created by zks on 2017/9/5.
+ * @author Created by zks on 2017/9/5.
  * RetrofitUtils
  */
 @Slf4j
