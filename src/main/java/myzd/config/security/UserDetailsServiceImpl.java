@@ -1,7 +1,7 @@
 package myzd.config.security;
 
 import myzd.domain.UserPermission;
-import myzd.mapper.AuthMapper;
+import myzd.authmapper.AuthMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;

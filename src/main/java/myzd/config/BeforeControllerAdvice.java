@@ -8,7 +8,6 @@ import myzd.domain.exceptions.GenericException;
 import myzd.domain.request.ResultWrapper;
 import myzd.domain.visitlog.TemplateEnum;
 import myzd.services.impl.FlowControlService;
-import myzd.services.impl.PipeKafkaService;
 import myzd.services.impl.PipeService;
 import myzd.utils.RequestHelper;
 import org.apache.commons.lang3.StringUtils;
@@ -51,8 +50,10 @@ public class BeforeControllerAdvice {
 	private FlowControlService flowControlService;
 	@Autowired
 	private PipeService penetrationService;
+	/*
 	@Autowired
 	private PipeKafkaService pipeKafkaService;
+	*/
 	@Autowired
 	private Environment environment;
 	@Autowired
@@ -180,7 +181,7 @@ public class BeforeControllerAdvice {
 	@AfterReturning(returning = "response", pointcut = "init()")
 	public void doAfterReturning(Object response) throws Throwable {
 		// 处理完请求, 发送kafka消息
-		String responseTime = String.valueOf((double) (System.currentTimeMillis() - startTime.get()) / 1000);
+		/*String responseTime = String.valueOf((double) (System.currentTimeMillis() - startTime.get()) / 1000);
 		Map<String, String> requestInfoMap = requestInfo.get();
 		requestInfoMap.put(TemplateEnum.RESPONSE_TIME, responseTime);
 		requestInfoMap.put(TemplateEnum.RESPONSE_STATUS, HttpStatus.OK.toString());
@@ -199,7 +200,7 @@ public class BeforeControllerAdvice {
 				log.warn("send request kafka message error.", e);
 			}
 		});
-		log.info("RESPONSE : " + response);
+		log.info("RESPONSE : " + response);*/
 	}
 
 	@AfterThrowing(value = "init()", throwing = "ex")

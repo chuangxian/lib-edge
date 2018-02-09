@@ -1,6 +1,6 @@
 buildscript {
   ext {
-    springBootVersion = '1.5.10.RELEASE'
+    springBootVersion = '1.5.2.RELEASE'
   }
   repositories {
     maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
@@ -14,7 +14,7 @@ apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 
 jar {
-  baseName = 'lib-edge-demo'
+  baseName = 'lib-edge-test'
   version = '0.0.1-SNAPSHOT'
 }
 sourceCompatibility = 1.8
@@ -36,7 +36,7 @@ dependencies {
   compile group: 'me.moocar', name: 'logback-gelf', version: '0.3'
   compile group: 'ch.qos.logback', name: 'logback-classic'
   compile group: 'ch.qos.logback', name: 'logback-core'
-  compile 'org.springframework.kafka:spring-kafka:1.2.2.RELEASE'
+  //compile 'org.springframework.kafka:spring-kafka:1.2.2.RELEASE'
   compile('org.projectlombok:lombok')
   compile('org.springframework.boot:spring-boot-starter-web')
   compile group: 'org.json', name: 'json', version: '20170516'
@@ -46,7 +46,7 @@ dependencies {
   compile "io.prometheus:simpleclient_spring_boot:0.0.23"
 
   compile "org.springframework.session:spring-session"
-  compile group: 'org.springframework.boot', name: 'spring-boot-starter-redis', version: '1.4.7.RELEASE'
+  compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
   compile "org.springframework.session:spring-session-data-redis"
   compile "org.springframework.security:spring-security-core"
   compile group: 'commons-io', name: 'commons-io', version: '2.4'
@@ -57,7 +57,6 @@ dependencies {
   runtime('mysql:mysql-connector-java')
 
   compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '1.5.2.RELEASE'
-  compile group: 'org.mybatis.caches', name: 'mybatis-redis', version: '1.0.0-beta1'
+    compile group: 'org.mybatis.caches', name: 'mybatis-redis', version: '1.0.0-beta1'
 
-  compile project(":library")
 }

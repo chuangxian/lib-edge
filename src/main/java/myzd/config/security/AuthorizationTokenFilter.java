@@ -77,5 +77,4 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 		log.debug("filter over");
 		filterChain.doFilter(request, response);
 	}
-
 }
