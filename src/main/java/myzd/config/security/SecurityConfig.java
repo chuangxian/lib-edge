@@ -11,7 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 
 /**
  * @author yrw
- * 2/6/2018
+ * @since 2/6/2018
  */
 @Configuration
 @EnableWebSecurity
@@ -41,7 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthorizationTokenFilter authenticationTokenFilterBean() throws Exception {
+	public AuthorizationTokenFilter authenticationTokenFilterBean() {
 		return new AuthorizationTokenFilter();
 	}
 }

@@ -6,17 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @author zks
- * 透传配置的注解
- * 环境 demo 应用本身 测试环境
- * http协议 web容器做法 身份验证
- * 某个接口 返回多个接口数据，拼装起来
- * data:{
- * userInfo:{code: data:{}}
- * config:{code: data:{}}
- * code:
- * .....
- * }
+ * @author yrw
+ * @since 2/10/2018
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @param <T>
  * @author yrw
+ * @since 2/10/2018
  */
 @Data
 @NoArgsConstructor

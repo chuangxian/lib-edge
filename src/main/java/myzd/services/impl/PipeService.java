@@ -263,21 +263,21 @@ public class PipeService {
 	 * @throws GenericException GenericException
 	 */
 	private Object doRequestOkHttp(URI clientUri, HttpServletRequest request, HttpServletResponse response, List requestBody, Class controllerClass, Method method)
-					throws IOException, URISyntaxException, GenericException {
+					throws IOException, GenericException {
 
 		//构建一个request请求
 		RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), toByte(requestBody));
 		Request clientRequest = new Request.Builder()
 						.url(clientUri.toURL())
 						.header("Content-Type", StringUtils.isNoneBlank(request.getContentType()) ?
-										request.getContentType() : "application/json")
+										request.getContentType() : CONTENT_TYPE_JSON)
 						//加入客户端真实ip。
 						.header("X-Real-IP", RequestHelper.getRealIp(request))
 						.header("Accept", request.getHeader("Accept")).build();
 
 		//把http头部的token重新编码发送给service
 		String token = getRequestAuthorizationToken(request, controllerClass, method);
-		if(token!=null){
+		if (token != null) {
 			token = String.format("Bearer %s", getRequestAuthorizationToken(request, controllerClass, method));
 			log.debug("request token: {}", token);
 			clientRequest = clientRequest.newBuilder().header("Authorization", token).build();
@@ -302,7 +302,7 @@ public class PipeService {
 			return filterValue(clientResponse, response, method);
 		} else if (clientResponse.code() >= HTTP_SERVER_ERROR) {
 			//封装成ResultWrapper，错误信息写在message里
-			return new ResultWrapper<String>(1000000, clientResponse.body().toString(), null);
+			return new ResultWrapper<String>(2311003, "服务器发生异常", null);
 		} else {
 			//其他结果，原样返回
 			setHeader("Location", response, clientResponse);
@@ -314,7 +314,7 @@ public class PipeService {
 	}
 
 	private void setHeader(String header, HttpServletResponse response, Response clientResponse) {
-		String headerContent = null;
+		String headerContent;
 		if ((headerContent = clientResponse.header(header)) != null && StringUtils.isNoneBlank(headerContent)) {
 			response.setHeader(header, headerContent);
 		}
@@ -336,7 +336,7 @@ public class PipeService {
 			}
 
 			//替换头部内容
-			SetHeaders setHeaders = null;
+			SetHeaders setHeaders;
 			if ((setHeaders = method.getAnnotation(SetHeaders.class)) != null) {
 				for (String value : setHeaders.value()) {
 					String[] header = value.split(":", 2);
@@ -366,13 +366,13 @@ public class PipeService {
 			for (i = 1; i < typeStrings.length; i++) {
 				log.debug("字符串数组当前值：{} ", typeStrings[i]);
 
-				if (typeStrings[i].contains("ListResult")) {
+				if (typeStrings[i].contains(".ListResult")) {
 					globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
 					log.debug("第" + i + "层，ListResult的泛型值为: {}", globalType);
-				} else if (typeStrings[i].contains("PagedResult")) {
+				} else if (typeStrings[i].contains(".PagedResult")) {
 					globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
 					log.debug("第" + i + "层，PagedResult泛型值为: {}", globalType);
-				} else if (typeStrings[i].contains("List")) {
+				} else if (typeStrings[i].contains(".List")) {
 					globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
 					log.debug("第" + i + "层，List的泛型值为: {}", globalType);
 				} else {
@@ -391,20 +391,20 @@ public class PipeService {
 			if (globalType instanceof ParameterizedType) {
 				globalType = ((ParameterizedType) globalType).getActualTypeArguments()[0];
 			}
-			if (type.contains("ListResult")) {
+			if (type.contains(".ListResult")) {
 				javaType = objectMapper.getTypeFactory().constructParametricType(ListResult.class, (Class<?>) globalType);
-			} else if (type.contains("PagedResult")) {
+			} else if (type.contains(".PagedResult")) {
 				javaType = objectMapper.getTypeFactory().constructParametricType(PagedResult.class, (Class<?>) globalType);
-			} else if (type.contains("List")) {
+			} else if (type.contains(".List")) {
 				javaType = objectMapper.getTypeFactory().constructParametricType(List.class, (Class<?>) globalType);
 			}
 
 			log.debug("second load");
 			for (int j = typeStrings.length - 3; j > 0; j--) {
-				if (typeStrings[j].contains("PagedResult")) {
+				if (typeStrings[j].contains(".PagedResult")) {
 					log.debug("嵌入PagedResult:");
 					javaType = objectMapper.getTypeFactory().constructParametricType(PagedResult.class, javaType);
-				} else if (typeStrings[j].contains("ListResult")) {
+				} else if (typeStrings[j].contains(".ListResult")) {
 					log.debug("嵌入ListResult:");
 					javaType = objectMapper.getTypeFactory().constructParametricType(ListResult.class, javaType);
 				} else {
@@ -435,7 +435,7 @@ public class PipeService {
 	 * @throws UnsupportedEncodingException UnsupportedEncodingException
 	 */
 	private String getRequestAuthorizationToken(HttpServletRequest request, Class controllerClass, Method method)
-					throws UnsupportedEncodingException, GenericException {
+					throws UnsupportedEncodingException {
 
 		Authentication authentication = method.getAnnotation(Authentication.class);
 
@@ -444,10 +444,12 @@ public class PipeService {
 			return null;
 		}
 		//如果没有加密secret，说明不需要将token传给service
-		String envEncryption = authentication.envEncryption() == null ?
-						((Authentication)controllerClass.getAnnotation(Authentication.class)).envEncryption() :
+		String envEncryption = StringUtils.isBlank(authentication.envEncryption()) ?
+						((Authentication) controllerClass.getAnnotation(Authentication.class)).envEncryption() :
 						authentication.envEncryption();
-		if(StringUtils.isAllBlank(envEncryption)){return null;}
+		if (StringUtils.isBlank(envEncryption)) {
+			return null;
+		}
 
 		//从session里得到userIdentity，并且加密传给service
 

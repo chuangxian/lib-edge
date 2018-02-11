@@ -17,6 +17,7 @@ import java.util.Map;
 
 /**
  * @author yrw
+ * @since 2/10/2018
  */
 @Component
 @Slf4j
@@ -31,7 +32,7 @@ public class JwtService {
 	public Map<String, String> decodeJwt(String authorizationToken)
 					throws GenericException, UnsupportedEncodingException {
 
-		String token = null;
+		String token;
 		if (StringUtils.isNoneBlank(authorizationToken) && authorizationToken.startsWith("Bearer ")) {
 			token = authorizationToken.substring(7);
 		} else {

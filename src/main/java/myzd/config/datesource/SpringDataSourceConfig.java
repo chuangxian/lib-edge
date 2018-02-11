@@ -3,7 +3,6 @@ package myzd.config.datesource;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -15,10 +14,8 @@ import javax.sql.DataSource;
 
 /**
  * @author yrw
- * 2/9/2018
+ * @since 2/9/2018
  */
-
-
 @Configuration
 @MapperScan(basePackages = {"myzd.mapper"}, sqlSessionFactoryRef = "springSqlSessionFactory")
 public class SpringDataSourceConfig {

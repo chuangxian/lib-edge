@@ -14,7 +14,7 @@ apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 
 jar {
-  baseName = 'lib-edge-test'
+  baseName = 'lib-edge'
   version = '0.0.1-SNAPSHOT'
 }
 sourceCompatibility = 1.8

@@ -1,7 +1,7 @@
 package myzd.config.security;
 
-import myzd.domain.UserPermission;
 import myzd.authmapper.AuthMapper;
+import myzd.domain.UserPermission;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * @author yrw
- * 2/6/2018
+ * @since 2/6/2018
  */
 @Component
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -38,6 +38,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 	/**
 	 * 得到该用户的权限集合
+	 *
 	 * @param id
 	 * @return List<String>
 	 */

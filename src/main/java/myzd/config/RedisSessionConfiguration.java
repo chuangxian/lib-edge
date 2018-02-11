@@ -30,7 +30,6 @@ public class RedisSessionConfiguration {
 	private final static String REDIS_POOL_MAX_WAIT = "spring.redis.pool.max-wait";
 	private final static String COOKIE_NAME = "server.session.cookie.name";
 	private final static String COOKIE_PATH = "server.session.cookie.path";
-	private final static String COOKIE_DOMAIN = "server.session.cookie.domain";
 	private final static String COOKIE_HTTP_ONLY = "server.session.cookie.http-only";
 	private final static String COOKIE_SECURE = "server.session.cookie.secure";
 	private final static String MAX_INACTIVE_INTERVAL_IN_SECONDS = "spring.session.timeout";

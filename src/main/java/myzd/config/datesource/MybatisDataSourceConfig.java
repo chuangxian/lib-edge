@@ -12,13 +12,13 @@ import javax.sql.DataSource;
 
 /**
  * @author yrw
- * 2/9/2018
+ * @since 2/9/2018
  */
 @Configuration
 @MapperScan(basePackages = {"myzd.authmapper"}, sqlSessionFactoryRef = "mybatisSqlSessionFactory")
 public class MybatisDataSourceConfig {
 
-	@Bean(name="authDataSource")
+	@Bean(name = "authDataSource")
 	@ConfigurationProperties(prefix = "auth.datasource")
 	public DataSource dataSource() {
 		return DataSourceBuilder.create().build();

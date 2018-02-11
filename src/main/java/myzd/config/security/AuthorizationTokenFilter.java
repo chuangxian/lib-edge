@@ -5,7 +5,6 @@ import myzd.domain.exceptions.GenericException;
 import myzd.services.impl.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,12 +18,11 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author yrw
- * 2/6/2018
+ * @since 2/6/2018
  */
 @Slf4j
 public class AuthorizationTokenFilter extends OncePerRequestFilter {
@@ -37,7 +35,7 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-					throws ServletException, IOException{
+					throws ServletException, IOException {
 		log.debug("filter start");
 		String auth = request.getHeader("Authorization");
 		Map<String, String> userIdentityMap = new HashMap<>(16);
@@ -48,10 +46,10 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 
 				//放进session里
 				HttpSession session = request.getSession();
-				for(String key:userIdentityMap.keySet()){
+				for (String key : userIdentityMap.keySet()) {
 					session.setAttribute(key, userIdentityMap.get(key));
 				}
-			}catch (GenericException e){
+			} catch (GenericException e) {
 			}
 		} else {
 			log.debug("从session里得到userIdentity");

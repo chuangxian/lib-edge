@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * @param <T>
  * @author yrw
+ * @since 2/10/2018
  */
 @Data
 @NoArgsConstructor
