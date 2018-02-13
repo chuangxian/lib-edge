@@ -3,13 +3,12 @@ package myzd.api.controllers;
 import io.swagger.annotations.ApiParam;
 import myzd.annotations.PipeConfig;
 import myzd.annotations.SetHeaders;
-import myzd.api.domain.Test1;
+import myzd.api.domain.User;
+import myzd.api.domain.UserInfo;
+import myzd.domain.exceptions.GenericException;
 import myzd.domain.request.ListResult;
 import myzd.domain.request.PagedResult;
 import myzd.domain.request.ResultWrapper;
-import myzd.mapper.TestMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,98 +16,81 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yrw
  * @since 2/10/2018
  */
-@PipeConfig(clientHost = "${test.service.host}")
-@RestController("/api/v1")
+@PipeConfig(clientHost = "http://127.0.0.1:${local.server.port}/mock/")
+@RestController
 public class TestController {
 
-	@Autowired
-	private TestMapper testMapper;
-
 	@PipeConfig
-	@PreAuthorize("hasAuthority('15')")
-	@GetMapping("/test/{id}")
-	public ResultWrapper<Test1> getController(
-					@ApiParam(value = "test1")
-					@PathVariable("id") Long id
+	@GetMapping("/api/v1/user/{id}")
+	public ResultWrapper<User> getUser(
+		@ApiParam(value = "User id")
+		@PathVariable("id") Long id
 	) {
 		return null;
 	}
 
 	@PipeConfig
-	@PostMapping("/test")
-	public ResultWrapper<Test1> postController(
-					@ApiParam(value = "test2") @RequestBody @Valid Test1 test1,
-					BindingResult result
+	@PostMapping("/api/v1/user")
+	public ResultWrapper<User> createUser(
+		@ApiParam(value = "User to be created") @RequestBody @Valid UserInfo user,
+		BindingResult result
+	) throws GenericException {
+		return null;
+	}
+
+	@PipeConfig
+	@PutMapping("/api/v1/user/{id}")
+	public ResultWrapper<User> updateUser(
+		@ApiParam(value = "User id") @PathVariable("id") Long id,
+		@ApiParam(value = "Latest user info") @RequestBody UserInfo user
 	) {
 		return null;
 	}
 
-	@PipeConfig
-	@PutMapping("/test/{id}")
-	public ResultWrapper<Test1> putController(
-					@ApiParam(value = "test1") @PathVariable("id") Long id,
-					@ApiParam(value = "test2") @RequestBody Test1 test1
-	) {
-		return null;
+	@GetMapping("/api/v1/redirect")
+	public void mockRedirect(
+		@ApiParam(value = "The url to be redirected to") @RequestParam("url") String url,
+		HttpServletResponse response) throws IOException {
+		response.sendRedirect(url);
 	}
 
 	@PipeConfig
-	@GetMapping("/test/re/{id}")
-	public ResultWrapper<Test1> redirectController(
-					@ApiParam(value = "test1") @PathVariable("id") Long id,
-					HttpServletResponse response) throws IOException {
-		return null;
-	}
-
-	@PipeConfig
-	@GetMapping("/test/download")
-	@SetHeaders(value = {"Content-Type:text/jpg",
-					"Content-Disposition:attachment;filename=1.jpg"})
+	@GetMapping("/api/v1/test/download")
+	@SetHeaders(value = {"Content-Type:image/png",
+		"Content-Disposition:attachment;filename=baidu.png"})
 	public void fileDownload(HttpServletResponse response)
-					throws MalformedURLException, IOException {
-		return;
+		throws MalformedURLException, IOException {
 	}
 
 	@PipeConfig
-	@GetMapping("/test/page/pojo")
-	public ResultWrapper<PagedResult<Test1>> pageTest() {
+	@GetMapping("/api/v1/test/page/pojo")
+	public ResultWrapper<PagedResult<String>> pageTest() {
 		return null;
 	}
 
 	@PipeConfig
-	@GetMapping("/test/page/list")
-	public ResultWrapper<PagedResult<List<Object>>> pageListTest() {
+	@GetMapping("/api/v1/test/page/list")
+	public ResultWrapper<PagedResult<List<String>>> pageListTest() {
+		return null;
+
+	}
+
+	@PipeConfig
+	@GetMapping("/api/v1/test/list")
+	public ResultWrapper<ListResult<User>> listTest() {
 		return null;
 	}
 
 	@PipeConfig
-	@GetMapping("/test/list")
-	public ResultWrapper<ListResult<Test1>> listTest() {
-		return null;
-	}
-
-	@PipeConfig
-	@GetMapping("/test/list/map")
-	public ResultWrapper<ListResult<HashMap<String, String>>> listMapTest() {
-		return null;
-	}
-
-	@GetMapping("/test/dateSource")
-	@PreAuthorize("hasAuthority('99')")
-	public ResultWrapper<String> dateSourceTest() {
-		return new ResultWrapper<String>(200, "message", testMapper.selectMethod());
-	}
-
-	@PipeConfig
-	@GetMapping("/test/empty")
-	public ResultWrapper<String> emptyDataTest() {
+	@GetMapping("/api/v1/test/list/map")
+	public ResultWrapper<ListResult<Map<String, String>>> listMapTest() {
 		return null;
 	}
 }
