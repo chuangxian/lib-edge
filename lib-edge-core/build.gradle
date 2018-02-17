@@ -1,0 +1,54 @@
+buildscript {
+    ext {
+        springBootVersion = '1.5.2.RELEASE'
+    }
+    repositories {
+        maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+
+jar {
+    baseName = 'lib-edge'
+    version = '0.0.1-SNAPSHOT'
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+}
+
+dependencies {
+    compile group: 'com.google.guava', name: 'guava', version: '22.0'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'
+    compile group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.3.0'
+    compile group: 'com.squareup.retrofit2', name: 'converter-jackson', version: '2.3.0'
+    compile group: 'com.squareup.retrofit2', name: 'converter-simplexml', version: '2.3.0'
+    compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
+    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.8.9'
+    compile group: 'com.auth0', name: 'java-jwt', version: '3.2.0'
+
+    compile group: 'me.moocar', name: 'logback-gelf', version: '0.3'
+    compile group: 'ch.qos.logback', name: 'logback-classic'
+    compile group: 'ch.qos.logback', name: 'logback-core'
+
+    compile('org.projectlombok:lombok')
+    compile('org.springframework.boot:spring-boot-starter-web')
+
+    compile "io.prometheus:simpleclient:0.0.23"
+    compile "io.prometheus:simpleclient_hotspot:0.0.23"
+    compile "io.prometheus:simpleclient_servlet:0.0.23"
+    compile "io.prometheus:simpleclient_spring_boot:0.0.23"
+
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
+    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    compile group: 'com.alibaba', name: 'druid', version: '1.0.31'
+    runtime('mysql:mysql-connector-java')
+
+}
