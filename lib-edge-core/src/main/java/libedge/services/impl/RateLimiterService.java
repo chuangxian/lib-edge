@@ -45,7 +45,7 @@ public class RateLimiterService {
 		// How much bursting do you want to allow?
 		Integer burstCapacity;
 		if (args.get(BURST_CAPACITY_KEY) == -1) {
-			burstCapacity = 2*replenishRate;
+			burstCapacity = 2 * replenishRate;
 		} else {
 			burstCapacity = args.get(BURST_CAPACITY_KEY);
 		}
@@ -60,8 +60,8 @@ public class RateLimiterService {
 			// The arguments to the LUA script. time() returns unixtime in seconds.
 			RedisSerializer serializer = new StringRedisSerializer();
 			List<Long> result = this.redisTemplate.execute(this.script, serializer, serializer, keys,
-							replenishRate+"", burstCapacity+"", Instant.now().getEpochSecond() + "", "1");
-			return result.get(0) == 1;
+							replenishRate + "", burstCapacity + "", Instant.now().getEpochSecond() + "", "1");
+			return result.get(0) == 1L;
 
 		} catch (Exception e) {
 

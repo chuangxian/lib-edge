@@ -1,9 +1,7 @@
 package myzd.api.controllers;
 
 import io.swagger.annotations.ApiParam;
-import libedge.annotations.Authentication;
 import libedge.annotations.PipeConfig;
-import libedge.annotations.RateLimit;
 import libedge.annotations.SetHeaders;
 import libedge.domain.exceptions.GenericException;
 import libedge.domain.request.ListResult;
@@ -22,21 +20,17 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-//import org.springframework.security.access.prepost.PreAuthorize;
-
 /**
  * @author yrw
- * @since 2/10/2018
+ * @since 2018/2/21
  */
 
 @Validated
 @PipeConfig(clientHost = "${test.service.host}")
 @RestController
-@RateLimit(rate = 5)
-public class DemoController {
+public class DemoPenetrateController {
 
 	@PipeConfig
-	@RateLimit
 	@GetMapping("/api/v1/user/{id}")
 	public ResultWrapper<User> getUser(
 					@ApiParam(value = "User id")
@@ -61,11 +55,31 @@ public class DemoController {
 		return null;
 	}
 
+	//301/302
+
+	@PipeConfig
 	@GetMapping("/api/v1/redirect")
 	public void mockRedirect(
 					@ApiParam(value = "The url to be redirected to") @RequestParam("url") String url,
 					HttpServletResponse response) throws IOException {
 		response.sendRedirect(url);
+	}
+
+	//>=500
+
+	@PipeConfig
+	@GetMapping("/api/v1/servererror")
+	public ResultWrapper<String> serverError(
+					@RequestParam("code") String code,
+					@RequestParam("message") String message
+	) throws GenericException {
+		throw new GenericException(code, message);
+	}
+
+	@PipeConfig
+	@GetMapping("/api/v1/clienterror")
+	public ResultWrapper<String> clientError() {
+		return null;
 	}
 
 	@PipeConfig
@@ -74,6 +88,9 @@ public class DemoController {
 					"Content-Disposition:attachment;filename=baidu.png"})
 	public void fileDownload(HttpServletResponse response) {
 	}
+
+
+	//type ResultWrapper/PageResult/ListResult
 
 	@PipeConfig
 	@GetMapping("/api/v1/test/page")
@@ -99,30 +116,4 @@ public class DemoController {
 		return null;
 	}
 
-	@PipeConfig
-	@GetMapping("/api/v1/servererror")
-	public ResultWrapper<String> serverError(
-					@RequestParam("code") String code,
-					@RequestParam("message") String message
-	) throws GenericException {
-		throw new GenericException(code, message);
-	}
-
-	@Authentication
-	@GetMapping("/api/v1/authenticate")
-	public ResultWrapper<String> authenticateUser() {
-		return new ResultWrapper<String>() {{
-			setCode(1000000);
-			setMessage("OK");
-			setData("success authenticated");
-		}};
-	}
-
-//	@Authentication
-//	@PreAuthorize("hasAuthority('99')")
-//	@PostMapping("/api/v1/authorize")
-//	@PipeConfig
-//	public ResultWrapper<UserInfo> authorizeUser(@RequestBody UserInfo user) {
-//		return null;
-//	}
 }

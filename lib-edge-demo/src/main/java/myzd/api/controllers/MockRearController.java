@@ -4,17 +4,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
 import io.swagger.annotations.ApiParam;
-import libedge.domain.exceptions.GenericException;
 import libedge.domain.request.ListResult;
 import libedge.domain.request.PagedResult;
 import libedge.domain.request.ResultWrapper;
 import myzd.api.domain.User;
 import myzd.api.domain.UserInfo;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -42,12 +39,8 @@ public class MockRearController {
 
 	@PostMapping("/api/v1/user")
 	public ResultWrapper<User> createUser(
-					@ApiParam(value = "User to be created") @RequestBody @Valid UserInfo user,
-					BindingResult result
-	) throws GenericException {
-		if (result.hasErrors()) {
-			throw new GenericException("1099000", result.toString());
-		}
+					@ApiParam(value = "User to be created") @RequestBody UserInfo user
+	) {
 		return new ResultWrapper<>(new User() {{
 			setName(user.getName());
 			setId(System.currentTimeMillis());
@@ -80,13 +73,13 @@ public class MockRearController {
 		content.copyTo(response.getOutputStream());
 	}
 
-	@GetMapping("/api/v1/test/page/pojo")
+	@GetMapping("/api/v1/test/page")
 	public ResultWrapper<PagedResult<String>> pageTest() {
 		return new ResultWrapper<>(new PagedResult<String>() {{
 			setPage(1);
 			setPageSize(20);
 			setSize(100);
-			setList(Collections.singletonList("test"));
+			setList(Collections.singletonList("Test"));
 		}});
 	}
 

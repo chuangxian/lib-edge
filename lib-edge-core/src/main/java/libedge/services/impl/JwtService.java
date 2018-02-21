@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import libedge.domain.exceptions.GenericException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,14 +28,9 @@ public class JwtService {
 	private String envDecryption;
 
 	public Map<String, String> decodeJwt(String authorizationToken)
-					throws GenericException, UnsupportedEncodingException {
+					throws UnsupportedEncodingException {
 
-		String token;
-		if (StringUtils.isNoneBlank(authorizationToken) && authorizationToken.startsWith("Bearer ")) {
-			token = authorizationToken.substring(7);
-		} else {
-			throw new GenericException("1212121", "token格式错误");
-		}
+		String token = authorizationToken.substring(7);
 
 		Map<String, String> userIdentityMap = new HashMap<>(16);
 

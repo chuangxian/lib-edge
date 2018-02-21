@@ -31,7 +31,7 @@ public class LibEdgeRateLimitConfiguration {
 
 	@Bean
 	@SuppressWarnings("unchecked")
-	public RedisScript rateLimiterRedisScript() {
+	public RedisScript libEdgeRateLimiterRedisScript() {
 		DefaultRedisScript redisScript = new DefaultRedisScript<>();
 		redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("META-INF/scripts/request_rate_limiter.lua")));
 		redisScript.setResultType(List.class);
@@ -46,7 +46,7 @@ public class LibEdgeRateLimitConfiguration {
 	}
 
 	@Bean
-	public JedisConnectionFactory rateLimitConnectionFactory() {
+	public JedisConnectionFactory libEdgeRateLimitConnectionFactory() {
 		JedisConnectionFactory factory = new JedisConnectionFactory();
 		JedisPoolConfig config = getRedisConfig();
 		factory.setPoolConfig(config);
@@ -55,8 +55,8 @@ public class LibEdgeRateLimitConfiguration {
 
 	@Bean
 	@Autowired
-	public RedisTemplate<String, String> rateLimiterRedisTemplate(
-					@Qualifier("rateLimitConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
+	public RedisTemplate<String, String> libEdgeRateLimiterRedisTemplate(
+					@Qualifier("libEdgeRateLimitConnectionFactory") RedisConnectionFactory redisConnectionFactory) {
 		if (null == redisConnectionFactory) {
 			log.error("Redis Template Service is not available");
 			return null;
@@ -71,8 +71,8 @@ public class LibEdgeRateLimitConfiguration {
 	@Bean
 	@Autowired
 	public RateLimiterService redisRateLimiter(
-					@Qualifier("rateLimiterRedisTemplate") RedisTemplate<String, String> redisTemplate,
-					@Qualifier("rateLimiterRedisScript") RedisScript<List<Long>> redisScript) {
+					@Qualifier("libEdgeRateLimiterRedisTemplate") RedisTemplate<String, String> redisTemplate,
+					@Qualifier("libEdgeRateLimiterRedisScript") RedisScript<List<Long>> redisScript) {
 		return new RateLimiterService(redisTemplate, redisScript);
 	}
 }

@@ -20,10 +20,4 @@ public class ResultWrapper<T> {
 		this.message = "OK";
 		this.data = data;
 	}
-
-	public ResultWrapper(int code, String message, T data) {
-		this.code = code;
-		this.message = message;
-		this.data = data;
-	}
 }

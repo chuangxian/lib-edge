@@ -1,3 +1,5 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  libedge.config.BeforeControllerAdvice
+  libedge.config.BeforeControllerAdvice,\
+  libedge.exception.GlobalControllerExceptionHandler,\
+  libedge.config.security.WebSecurityConfig

@@ -25,15 +25,6 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.google.guava', name: 'guava', version: '22.0'
-    compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.8.9'
-
-    compile group: 'me.moocar', name: 'logback-gelf', version: '0.3'
-    compile group: 'ch.qos.logback', name: 'logback-classic'
-    compile group: 'ch.qos.logback', name: 'logback-core'
-
-    compile('org.projectlombok:lombok')
-    compile('org.springframework.boot:spring-boot-starter-web')
     compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
 
     testCompile('org.springframework.boot:spring-boot-starter-test')

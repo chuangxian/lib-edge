@@ -10,6 +10,7 @@ local requested = tonumber(ARGV[4])
 local fill_time = capacity/rate
 local ttl = math.floor(fill_time*2)
 
+--redis.log(redis.LOG_WARNING, "key" ..tokens_key)
 --redis.log(redis.LOG_WARNING, "rate " .. ARGV[1])
 --redis.log(redis.LOG_WARNING, "capacity " .. ARGV[2])
 --redis.log(redis.LOG_WARNING, "now " .. ARGV[3])

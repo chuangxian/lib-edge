@@ -93,6 +93,7 @@ public class BeforeControllerAdvice {
 		//接收到请求,记录请求内容
 		ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 		HttpServletRequest request = attributes.getRequest();
+		HttpServletResponse response = attributes.getResponse();
 
 		//得到action方法
 		MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
@@ -102,8 +103,9 @@ public class BeforeControllerAdvice {
 
 		//是否标注了@Authentication
 		if (action.getAnnotation(Authentication.class) != null) {
-			String authorization = request.getHeader("Authorization");
-			if (authorization == null || StringUtils.isBlank(authorization)) {
+			boolean hasUserInfo = request.getSession().getAttribute("uid") != null
+							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("uid"));
+			if (!hasUserInfo) {
 				throw new GenericException("2411006", "unauthenticated");
 			}
 		}
@@ -113,26 +115,30 @@ public class BeforeControllerAdvice {
 			if (rateLimiterService == null) {
 				throw new GenericException("1212121", "RateLimiterService is null!");
 			}
-			int rate, capacity;
-			if ((rate = action.getAnnotation(RateLimit.class).rate()) == -1) {
-				rate = ((RateLimit) controllerClass.getAnnotation(RateLimit.class)).rate();
+			int rate = -1, capacity = -1;
+
+			RateLimit rateLimit = (RateLimit) controllerClass.getAnnotation(RateLimit.class);
+			if (rateLimit != null) {
+				rate = rateLimit.rate();
+				capacity = rateLimit.capacity();
 			}
-			if ((capacity = action.getAnnotation(RateLimit.class).capacity()) == -1) {
-				capacity = ((RateLimit) controllerClass.getAnnotation(RateLimit.class)).capacity();
+			rateLimit = action.getAnnotation(RateLimit.class);
+			if (rateLimit.rate() != -1) {
+				rate = rateLimit.rate();
+				capacity = rateLimit.capacity();
 			}
 			if (rate == -1) {
 				throw new GenericException("1212121", "invalid paramter[rate]");
 			}
 			String clientIp = request.getRemoteAddr();
-			String requestAction = action.getName();
+			String requestAction = action.toString();
 			if (!rateLimiterService.isAllowed(clientIp, requestAction,
 							ImmutableMap.of(REPLENISH_RATE_KEY, rate, BURST_CAPACITY_KEY, capacity))) {
 				throw new TooManyRequestsException("too many requests!");
 			}
 		}
 
-		//得到参数中标注了@RequestBody的参数内容，和HttpServletResponse
-		HttpServletResponse response = null;
+		//得到参数中标注了@RequestBody的参数内容
 		List<Object> requestBodyList = new ArrayList<>();
 
 		Parameter[] parameters = action.getParameters();
@@ -141,8 +147,6 @@ public class BeforeControllerAdvice {
 		for (int i = 0; i < parameters.length; i++) {
 			if (parameters[i].getAnnotation(RequestBody.class) != null) {
 				requestBodyList.add(parameterContent[i]);
-			} else if (parameterContent[i] instanceof HttpServletResponse) {
-				response = (HttpServletResponse) parameterContent[i];
 			}
 		}
 

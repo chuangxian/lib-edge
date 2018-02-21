@@ -1,8 +1,5 @@
 package myzd;
 
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,14 +25,6 @@ public class FilterValueTest {
 	@Autowired
 	private MockMvc mvc;
 
-	@BeforeClass
-	public static void checkCiEnv() {
-		Assume.assumeTrue(
-						StringUtils.equals(System.getenv("RUN_CI_TESTS"), "true") || // running in CI env.
-										System.getProperty("sun.java.command", "").startsWith("com.intellij.rt.execution.junit.JUnitStarter") // directly running with intellij.
-		);
-	}
-
 	@Test
 	public void testPojo() throws Exception {
 		mvc.perform(get("/api/v1/user/10")
@@ -55,12 +44,8 @@ public class FilterValueTest {
 						.andExpect(status().isOk())
 						.andExpect(jsonPath("$.code").value(1000000))
 						.andExpect(jsonPath("$.message").value("OK"))
-						.andExpect(jsonPath("$.data.list[*]").value("test")
+						.andExpect(jsonPath("$.data.list[*]").value("Test")
 						);
-	}
-
-	@Test
-	public void testPageResultList() {
 	}
 
 	//list
@@ -72,7 +57,7 @@ public class FilterValueTest {
 						.andExpect(jsonPath("$.message").value("OK"))
 						.andExpect(jsonPath("$.data.list.length()").value(1))
 						.andExpect(jsonPath("$.data.list[0].id").exists())
-						.andExpect(jsonPath("$.data.list[0].name").value("test")
+						.andExpect(jsonPath("$.data.list[0].name").value("Test")
 						);
 	}
 
@@ -82,7 +67,7 @@ public class FilterValueTest {
 						.andExpect(jsonPath("$.code").value(1000000))
 						.andExpect(jsonPath("$.message").value("OK"))
 						.andExpect(jsonPath("$.data.list.length()").value(1))
-						.andExpect(jsonPath("$.data.list[0]").value("[\"key\", \"test\"]")
+						.andExpect(jsonPath("$.data.list[0].key").value("test")
 						);
 	}
 

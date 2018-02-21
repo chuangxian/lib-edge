@@ -40,6 +40,8 @@ dependencies {
 
     compile('org.projectlombok:lombok')
     compile('org.springframework.boot:spring-boot-starter-web')
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile group: 'org.springframework', name: 'spring-jdbc', version: '5.0.2.RELEASE'
 
     compile "io.prometheus:simpleclient:0.0.23"
     compile "io.prometheus:simpleclient_hotspot:0.0.23"

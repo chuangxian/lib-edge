@@ -22,14 +22,14 @@ public class LibEdgePipeConfiguration {
 	@Autowired
 	public PipeService pipeService(
 					Environment env,
-					@Qualifier("pipeOkHttpClient") OkHttpClient okHttpClient,
-					@Qualifier("pipeObjectMapper") ObjectMapper objectMapper,
-					JwtService jwtService) {
+					@Qualifier("libEdgePipeOkHttpClient") OkHttpClient okHttpClient,
+					@Qualifier("libEdgePipeObjectMapper") ObjectMapper objectMapper,
+					@Qualifier("libEdgeJwtService") JwtService jwtService) {
 		return new PipeService(env, okHttpClient, objectMapper, jwtService);
 	}
 
 	@Bean
-	public OkHttpClient pipeOkHttpClient() {
+	public OkHttpClient libEdgePipeOkHttpClient() {
 		return new OkHttpClient.Builder()
 						.followRedirects(false)
 						.followSslRedirects(false)
@@ -37,12 +37,12 @@ public class LibEdgePipeConfiguration {
 	}
 
 	@Bean
-	public ObjectMapper pipeObjectMapper() {
+	public ObjectMapper libEdgePipeObjectMapper() {
 		return new ObjectMapper();
 	}
 
 	@Bean
-	public JwtService jwtService() {
+	public JwtService libEdgeJwtService() {
 		return new JwtService();
 	}
 }
