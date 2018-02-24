@@ -58,8 +58,28 @@ public class BeforeControllerAdvice {
 	private ThreadLocal<Long> startTime = new ThreadLocal<>();
 	private ThreadLocal<Map<String, String>> requestInfo = new ThreadLocal<>();
 
-	@Pointcut("execution(public * myzd.api.controllers.*.*(..))")
-	public void init() {
+	@Pointcut("@annotation(libedge.annotations.PipeConfig)")
+	public void pipeConfig() {
+	}
+
+	@Pointcut("@annotation(libedge.annotations.RateLimit)")
+	public void rateLimit() {
+	}
+
+	@Pointcut("@annotation(libedge.annotations.Authentication)")
+	public void authentication() {
+	}
+
+	@Pointcut("@annotation(org.springframework.security.access.prepost.PreAuthorize)")
+	public void authorization() {
+	}
+
+	@Pointcut("@annotation(libedge.annotations.SetHeaders)")
+	public void setHeader(){
+	}
+
+	@Pointcut("pipeConfig() || rateLimit() || authentication() || authorization() || setHeader()")
+	public void init(){
 	}
 
 	@Before("init()")

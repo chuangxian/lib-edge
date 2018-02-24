@@ -19,7 +19,7 @@ import java.util.Map;
  * @author Created by Mike He on 2017/3/7.
  */
 @Slf4j
-@ControllerAdvice(basePackages = "myzd.api.controllers")
+@ControllerAdvice
 public class GlobalControllerExceptionHandler {
 
 	public static Map<String, String> errorResponse(Throwable throwable) {
