@@ -45,10 +45,10 @@ public class BeforeControllerAdvice {
 	public static final String REPLENISH_RATE_KEY = "replenishRate";
 	public static final String BURST_CAPACITY_KEY = "burstCapacity";
 
-	@Autowired(required = false)
+	@Autowired
 	private PipeService pipeService;
 
-	@Autowired(required = false)
+	@Autowired
 	private RateLimiterService rateLimiterService;
 
 	@Autowired
@@ -75,11 +75,11 @@ public class BeforeControllerAdvice {
 	}
 
 	@Pointcut("@annotation(libedge.annotations.SetHeaders)")
-	public void setHeader(){
+	public void setHeader() {
 	}
 
 	@Pointcut("pipeConfig() || rateLimit() || authentication() || authorization() || setHeader()")
-	public void init(){
+	public void init() {
 	}
 
 	@Before("init()")
@@ -132,9 +132,6 @@ public class BeforeControllerAdvice {
 
 		//流控
 		if (action.getAnnotation(RateLimit.class) != null) {
-			if (rateLimiterService == null) {
-				throw new GenericException("1212121", "RateLimiterService is null!");
-			}
 			int rate = -1, capacity = -1;
 
 			RateLimit rateLimit = (RateLimit) controllerClass.getAnnotation(RateLimit.class);
@@ -177,9 +174,6 @@ public class BeforeControllerAdvice {
 		//透传
 		PipeConfig pipeConfig = action.getAnnotation(PipeConfig.class);
 		if (pipeConfig != null) {
-			if (pipeService == null) {
-				throw new GenericException("1212121", "PipeService is null!");
-			}
 			object = pipeService.penetrate(request, response, action, controllerClass, requestBodyList);
 		}
 		log.debug("penetration response: {}", object);

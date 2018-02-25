@@ -8,7 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.io.support.ResourcePropertySource;
+
+import java.io.IOException;
 
 
 /**
@@ -17,6 +22,16 @@ import org.springframework.core.env.Environment;
  */
 @Configuration
 public class LibEdgePipeConfiguration {
+
+	@Autowired
+	private ConfigurableEnvironment environment;
+
+	@Bean
+	public ObjectMapper libEdgePipeObjectMapper() throws IOException {
+		MutablePropertySources propertySources = environment.getPropertySources();
+		propertySources.addFirst(new ResourcePropertySource("classpath:application.properties"));
+		return new ObjectMapper();
+	}
 
 	@Bean
 	@Autowired
@@ -34,11 +49,6 @@ public class LibEdgePipeConfiguration {
 						.followRedirects(false)
 						.followSslRedirects(false)
 						.build();
-	}
-
-	@Bean
-	public ObjectMapper libEdgePipeObjectMapper() {
-		return new ObjectMapper();
 	}
 
 	@Bean

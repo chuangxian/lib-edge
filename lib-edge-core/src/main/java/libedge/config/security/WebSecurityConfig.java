@@ -20,7 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
-	@Autowired(required = false)
+	@Autowired
 	private UserDetailsServiceImpl userDetailsService;
 
 	@Autowired
@@ -47,7 +47,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthorizationTokenFilter authorizationTokenFilter() {
+	public AuthorizationTokenFilter authorizationTokenFilter(
+	) {
 		return new AuthorizationTokenFilter();
 	}
 }
