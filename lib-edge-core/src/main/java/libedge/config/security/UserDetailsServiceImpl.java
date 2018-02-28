@@ -1,6 +1,5 @@
 package libedge.config.security;
 
-import libedge.domain.exceptions.GenericException;
 import libedge.repository.RoleRepository;
 import lombok.Data;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,11 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
 		UserPermission user = new UserPermission();
 		user.setId(id);
-		try {
-			user.setRoles(getRoles(id));
-		} catch (GenericException e) {
-			e.printStackTrace();
-		}
+		user.setRoles(getRoles(id));
 		return user;
 	}
 
@@ -41,7 +36,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	 * @param id
 	 * @return List<String>
 	 */
-	public List<String> getRoles(String id) throws GenericException {
+	public List<String> getRoles(String id) {
 		List<String> roleList = new ArrayList<>();
 		roleList.addAll(roleRepository.getRoles(id));
 		return roleList;

@@ -337,13 +337,13 @@ public class PipeService {
 		} else {
 			//如果不是json，直接返回
 			//替换头部内容
-			SetHeaders setHeaders;
-			if ((setHeaders = method.getAnnotation(SetHeaders.class)) != null) {
-				for (String value : setHeaders.value()) {
-					String[] header = value.split(":", 2);
-					response.setHeader(header[0], header[1]);
-				}
-			}
+//			SetHeaders setHeaders;
+//			if ((setHeaders = method.getAnnotation(SetHeaders.class)) != null) {
+//				for (String value : setHeaders.value()) {
+//					String[] header = value.split(":", 2);
+//					response.setHeader(header[0], header[1]);
+//				}
+//			}
 
 			IOUtils.copy(clientResponseBody.byteStream(), response.getOutputStream());
 			return null;

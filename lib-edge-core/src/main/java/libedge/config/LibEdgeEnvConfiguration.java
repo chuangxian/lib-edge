@@ -1,6 +1,7 @@
 package libedge.config;
 
 import libedge.config.security.UserDetailsServiceImpl;
+import libedge.config.security.WebSecurityConfig;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
 import libedge.services.impl.RateLimiterService;

@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,9 @@ public class JwtService {
 
 	@Value("${jwt.secret.envDecryption}")
 	private String envDecryption;
+
+	@Value("${token.jwt.expire.seconds}")
+	private Integer tokenExpire;
 
 	public Map<String, String> decodeJwt(String authorizationToken)
 					throws UnsupportedEncodingException {
@@ -54,7 +58,11 @@ public class JwtService {
 		//得到面向service的密钥
 		//把userIdentity内容加密
 		Algorithm algorithm = getAlgorithm(jwtAlgorithm, envEncryption);
-		JWTCreator.Builder builder = JWT.create();
+		Date nowDate = new Date();
+		Date expire = DateUtils.addSeconds(nowDate, tokenExpire);
+		JWTCreator.Builder builder = JWT.create()
+						.withIssuedAt(new Date())
+						.withNotBefore(expire);
 		userIdentityMap.forEach(builder::withClaim);
 		builder.withIssuedAt(new Date());
 		return builder.sign(algorithm);

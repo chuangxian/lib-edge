@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import libedge.annotations.Authentication;
 import libedge.annotations.PipeConfig;
 import libedge.annotations.RateLimit;
+import libedge.annotations.SetHeaders;
 import libedge.domain.exceptions.GenericException;
 import libedge.domain.exceptions.TooManyRequestsException;
 import libedge.domain.visitlog.TemplateEnum;
@@ -41,9 +42,9 @@ import java.util.Map;
 @Slf4j
 public class BeforeControllerAdvice {
 
-	private final static String ENV_APPLICATION_NAME = "application.name";
-	public static final String REPLENISH_RATE_KEY = "replenishRate";
-	public static final String BURST_CAPACITY_KEY = "burstCapacity";
+	private static final String ENV_APPLICATION_NAME = "application.name";
+	private static final String REPLENISH_RATE_KEY = "replenishRate";
+	private static final String BURST_CAPACITY_KEY = "burstCapacity";
 
 	@Autowired
 	private PipeService pipeService;
@@ -152,6 +153,15 @@ public class BeforeControllerAdvice {
 			if (!rateLimiterService.isAllowed(clientIp, requestAction,
 							ImmutableMap.of(REPLENISH_RATE_KEY, rate, BURST_CAPACITY_KEY, capacity))) {
 				throw new TooManyRequestsException("too many requests!");
+			}
+		}
+
+		//替换response header内容
+		SetHeaders setHeaders;
+		if ((setHeaders = action.getAnnotation(SetHeaders.class)) != null) {
+			for (String value : setHeaders.value()) {
+				String[] header = value.split(":", 2);
+				response.setHeader(header[0], header[1]);
 			}
 		}
 
