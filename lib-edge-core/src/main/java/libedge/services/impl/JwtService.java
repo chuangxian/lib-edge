@@ -3,6 +3,7 @@ package libedge.services.impl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +47,16 @@ public class JwtService {
 
 			try {
 				DecodedJWT body = JWT.require(algorithm).acceptIssuedAt(300).build().verify(token);
-				body.getClaims().forEach((key, value) -> userIdentityMap.put(key, value.asString()));
+				for (String key : body.getClaims().keySet()) {
+					Claim value = body.getClaim(key);
+					if (value.asString() != null) {
+						userIdentityMap.put(key, value.asString());
+					} else if (value.asInt() != null) {
+						userIdentityMap.put(key, value.asInt().toString());
+					} else {
+						userIdentityMap.put(key, value.asLong().toString());
+					}
+				}
 			} catch (Exception e) {
 			}
 		}
