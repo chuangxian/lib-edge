@@ -48,6 +48,7 @@ public class JwtService {
 			try {
 				DecodedJWT body = JWT.require(algorithm).acceptIssuedAt(300).build().verify(token);
 				for (String key : body.getClaims().keySet()) {
+					if("nbf".equals(key) || "iat".equals(key) || "exp".equals(key)){continue;}
 					Claim value = body.getClaim(key);
 					if (value.asString() != null) {
 						userIdentityMap.put(key, value.asString());
@@ -74,7 +75,6 @@ public class JwtService {
 						.withIssuedAt(new Date())
 						.withNotBefore(expire);
 		userIdentityMap.forEach(builder::withClaim);
-		builder.withIssuedAt(new Date());
 		return builder.sign(algorithm);
 	}
 

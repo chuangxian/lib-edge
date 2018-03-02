@@ -34,7 +34,7 @@ public class AuthenticationTest {
 		Long id = System.currentTimeMillis();
 		mvc.perform(get(String.format("/api/v1/user/%d/authenticate", id))
 						.header("Authorization",
-										"Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1aWQiOiIxIiwicm9sZSI6IlNUQUZGIiwidXNlck5hbWUiOiLoooHlh6Hov6oiLCJkZXBhcnRtZW50IjoiMTQiLCJ1c2VyIjoibGl1QG1pbmd5aXpodWRhby5jb20iLCJpYXQiOjE1MDg4MTc2NTAsInJlcUlkIjoiZTNhY2Y5ZGFhOGZkYTdmYjM1OThlMTg4MTQyMTRlZGQifQ.vdqfZmMXg5E4O6uFb6vbPsz7xzgySMdJ8zirE6IfZNg")
+										"Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOjI3LCJtb2JpbGUiOiIxNzcxNzM5NDU2MCIsImF2YXRhciI6Imh0dHBzOi8vcC5xbG9nby5jbi9iaXptYWlsL0E0ckw0M1JhbDdjdzlsaWNCN0lsT3dWRG1FWGliMklCRjJpY2R5Vkt1QkY3VmZLV0ZSS0pqaWFzNkEvMCIsInVzZXJOYW1lIjoi5byg5YWL5Y2HIiwidWlkIjoiU0gwMDE3IiwibmJmIjoxNTE5NzEyOTQwLCJzdGFmZl9pZCI6IlNIMDAxNyIsIm5hbWUiOiLlvKDlhYvljYciLCJleHAiOjE1MjAzMTc3NDAsImRlcGFydG1lbnQiOiIxNCIsInVzZXIiOiJjbGFyay56aGFuZ0BtaW5neWl6aHVkYW8uY29tIiwiaWF0IjoxNTE5NzEyOTQwLCJlbWFpbCI6ImNsYXJrLnpoYW5nQG1pbmd5aXpodWRhby5jb20iLCJqdGkiOiLsmpbgtIbtj5bgrqzovKDhuJXhq47mpY_lmY3ulbTupLfguJ_is6Hpjqbrm67pu5oifQ.oZU3y5DLTbI5D8FCKPmwjWxBp_UHxjpSGViDI2zwGQc")
 						.accept(MediaType.APPLICATION_JSON))
 						.andExpect(status().isOk())
 						.andExpect(jsonPath("$.code").value(1000000))
@@ -42,7 +42,6 @@ public class AuthenticationTest {
 						.andExpect(jsonPath("$.data.id").value(id))
 						.andExpect(jsonPath("$.data.name").value("Name of " + id)
 						);
-
 	}
 
 	//has no identity message

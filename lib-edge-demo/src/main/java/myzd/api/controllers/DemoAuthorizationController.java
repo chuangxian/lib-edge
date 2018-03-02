@@ -2,6 +2,7 @@ package myzd.api.controllers;
 
 import io.swagger.annotations.ApiParam;
 import libedge.annotations.Authentication;
+import libedge.annotations.PipeConfig;
 import libedge.domain.request.ResultWrapper;
 import myzd.api.domain.User;
 import myzd.api.domain.UserInfo;
@@ -18,20 +19,14 @@ import javax.validation.constraints.Max;
 @RestController
 public class DemoAuthorizationController {
 
-	@Authentication
+	@PipeConfig(clientHost = "${test.service.host}")
+	@Authentication(envEncryption = "${source.intranet.secret}")
 	@GetMapping("/api/v1/user/{id}/authenticate")
 	public ResultWrapper<User> authenticateUser(
 					@ApiParam(value = "User id")
 					@PathVariable("id") Long id
 	) {
-		return new ResultWrapper<User>() {{
-			setMessage("OK");
-			setCode(1000000);
-			setData(new User() {{
-				setId(id);
-				setName("Name of " + id);
-			}});
-		}};
+		return null;
 	}
 
 	@Authentication

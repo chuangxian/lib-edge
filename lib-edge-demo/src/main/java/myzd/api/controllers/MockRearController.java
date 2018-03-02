@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Resources;
 import io.swagger.annotations.ApiParam;
+import libedge.annotations.Authentication;
+import libedge.annotations.PipeConfig;
 import libedge.domain.request.ListResult;
 import libedge.domain.request.PagedResult;
 import libedge.domain.request.ResultWrapper;
@@ -115,6 +117,21 @@ public class MockRearController {
 							)
 			));
 		}});
+	}
+
+	@GetMapping("/api/v1/user/{id}/authenticate")
+	public ResultWrapper<User> authenticateUser(
+					@ApiParam(value = "User id")
+					@PathVariable("id") Long id
+	) {
+		return new ResultWrapper<User>() {{
+			setMessage("OK");
+			setCode(1000000);
+			setData(new User() {{
+				setId(id);
+				setName("Name of " + id);
+			}});
+		}};
 	}
 
 }

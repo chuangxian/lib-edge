@@ -1,6 +1,11 @@
 package libedge.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
 import okhttp3.OkHttpClient;
@@ -30,7 +35,13 @@ public class LibEdgePipeConfiguration {
 	public ObjectMapper libEdgePipeObjectMapper() throws IOException {
 		MutablePropertySources propertySources = environment.getPropertySources();
 		propertySources.addFirst(new ResourcePropertySource("classpath:application.properties"));
-		return new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		mapper.registerModule(new JavaTimeModule());
+		return mapper;
 	}
 
 	@Bean
