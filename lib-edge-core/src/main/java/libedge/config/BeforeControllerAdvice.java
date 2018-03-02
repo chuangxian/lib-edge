@@ -18,6 +18,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -134,7 +135,6 @@ public class BeforeControllerAdvice {
 		//流控
 		if (action.getAnnotation(RateLimit.class) != null) {
 			int rate = -1, capacity = -1;
-
 			RateLimit rateLimit = (RateLimit) controllerClass.getAnnotation(RateLimit.class);
 			if (rateLimit != null) {
 				rate = rateLimit.rate();
@@ -146,7 +146,7 @@ public class BeforeControllerAdvice {
 				capacity = rateLimit.capacity();
 			}
 			if (rate == -1) {
-				throw new GenericException("1212121", "invalid paramter[rate]");
+				throw new GenericException("1911010", "invalid RateLimiter paramter[rate]");
 			}
 			String clientIp = request.getRemoteAddr();
 			String requestAction = action.toString();

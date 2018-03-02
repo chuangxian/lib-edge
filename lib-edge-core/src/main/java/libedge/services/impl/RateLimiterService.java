@@ -64,7 +64,6 @@ public class RateLimiterService {
 			return result.get(0) == 1L;
 
 		} catch (Exception e) {
-
 			log.error("Error determining if user allowed from redis", e);
 		}
 		return false;

@@ -336,15 +336,6 @@ public class PipeService {
 			return objectMapper.readValue(clientResponseBody.bytes(), javaType);
 		} else {
 			//如果不是json，直接返回
-			//替换头部内容
-//			SetHeaders setHeaders;
-//			if ((setHeaders = method.getAnnotation(SetHeaders.class)) != null) {
-//				for (String value : setHeaders.value()) {
-//					String[] header = value.split(":", 2);
-//					response.setHeader(header[0], header[1]);
-//				}
-//			}
-
 			IOUtils.copy(clientResponseBody.byteStream(), response.getOutputStream());
 			return null;
 		}
@@ -371,7 +362,7 @@ public class PipeService {
 
 		JavaType javaType = null;
 		if (i <= 1) {
-			throw new GenericException("1212121", "返回格式应该是ResultWrapper");
+			throw new GenericException("1911011", "返回格式应该是ResultWrapper");
 		}
 
 		i -= 2;

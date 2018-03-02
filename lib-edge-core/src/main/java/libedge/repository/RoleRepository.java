@@ -43,7 +43,7 @@ public class RoleRepository {
 	}
 
 	private List<String> getRolesFromRedis(String id) {
-		String result = redisTemplate.opsForValue().get(id);
+		String result = redisTemplate.opsForValue().get("lib-edge-userAuthority:"+id);
 		if (result == null) {
 			return null;
 		}
@@ -65,7 +65,7 @@ public class RoleRepository {
 			value.append(r).append(",");
 		}
 		if (value.length() > 0) {
-			redisTemplate.opsForValue().set(id, value.toString(), expireTime, TimeUnit.SECONDS);
+			redisTemplate.opsForValue().set("lib-edge-userAuthority:"+id, value.toString(), expireTime, TimeUnit.SECONDS);
 		}
 	}
 }
