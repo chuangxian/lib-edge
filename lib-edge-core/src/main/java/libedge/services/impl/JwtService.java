@@ -73,7 +73,7 @@ public class JwtService {
 		Date expire = DateUtils.addSeconds(nowDate, tokenExpire);
 		JWTCreator.Builder builder = JWT.create()
 						.withIssuedAt(new Date())
-						.withNotBefore(expire);
+						.withExpiresAt(expire);
 		userIdentityMap.forEach(builder::withClaim);
 		return builder.sign(algorithm);
 	}
