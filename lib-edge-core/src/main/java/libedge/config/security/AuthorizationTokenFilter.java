@@ -1,11 +1,11 @@
 package libedge.config.security;
 
-import libedge.domain.exceptions.GenericException;
-import libedge.services.impl.JwtService;
+import libedge.services.impl.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,24 +31,18 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 	private UserDetailsServiceImpl userDetailsService;
 
 	@Autowired
-	private JwtService jwtService;
+	@Qualifier("libEdgeAuthenticationService")
+	private AuthenticationService authenticationService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 					throws ServletException, IOException {
 		log.debug("filter start");
 		String auth = request.getHeader("Authorization");
-		Map<String, String> userIdentityMap = new HashMap<>(16);
 
 		if (auth != null && auth.startsWith("Bearer ")) {
-			log.debug("解析Authorization，得到userIdentity");
-			try {
-				userIdentityMap = jwtService.decodeJwt(auth);
-				if (userIdentityMap.size() == 0) {
-					throw new GenericException("1212121", "decode failed!");
-				}
-			} catch (GenericException e) {
-			}
+			log.debug("通过sessionId，得到userIdentity");
+			Map<String, String> userIdentityMap = authenticationService.getUserDetailsFromSession(auth);
 
 			//存入内存
 			HttpSession session = request.getSession();

@@ -2,6 +2,7 @@ package libedge.config;
 
 import libedge.config.security.UserDetailsServiceImpl;
 import libedge.repository.RoleRepository;
+import libedge.services.impl.AuthenticationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,5 +113,26 @@ public class LibEdgeAuthorizationConfiguration {
 	public UserDetailsServiceImpl userDetailsServiceImpl(
 					@Qualifier("libEdgeRoleRepository") RoleRepository roleRepository) {
 		return new UserDetailsServiceImpl(roleRepository);
+	}
+
+	@Bean
+	public RedisTemplate libEdgeSessionRedisTemplate(){
+		JedisPoolConfig poolConfig = new JedisPoolConfig();
+		JedisConnectionFactory factory = new JedisConnectionFactory(poolConfig);
+		factory.setHostName("192.168.33.10");
+		factory.setPort(6379);
+		factory.afterPropertiesSet();
+
+		RedisTemplate redisTemplate = new RedisTemplate();
+		redisTemplate.setConnectionFactory(factory);
+		redisTemplate.setKeySerializer(new StringRedisSerializer());
+		redisTemplate.setValueSerializer(new StringRedisSerializer());
+		return redisTemplate;
+	}
+
+	@Bean
+	public AuthenticationService libEdgeAuthenticationService(
+					@Qualifier("libEdgeSessionRedisTemplate") RedisTemplate redisTemplate){
+		return new AuthenticationService(redisTemplate);
 	}
 }

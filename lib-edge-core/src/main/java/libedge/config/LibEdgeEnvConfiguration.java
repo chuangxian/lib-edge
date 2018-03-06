@@ -1,7 +1,9 @@
 package libedge.config;
 
+import libedge.annotations.Authentication;
 import libedge.config.security.UserDetailsServiceImpl;
 import libedge.config.security.WebSecurityConfig;
+import libedge.services.impl.AuthenticationService;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
 import libedge.services.impl.RateLimiterService;
@@ -17,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 public class LibEdgeEnvConfiguration {
 
 	@Bean
-	public AnnotationConfigApplicationContext LibEdgeapplicationContext() {
+	public AnnotationConfigApplicationContext libEdgeapplicationContext() {
 		return new AnnotationConfigApplicationContext(
 						LibEdgePipeConfiguration.class,
 						LibEdgeAuthorizationConfiguration.class,
@@ -26,22 +28,27 @@ public class LibEdgeEnvConfiguration {
 
 	@Bean
 	public UserDetailsServiceImpl userDetailsServiceImpl() {
-		return (UserDetailsServiceImpl) LibEdgeapplicationContext().getBean("userDetailsServiceImpl");
+		return (UserDetailsServiceImpl) libEdgeapplicationContext().getBean("userDetailsServiceImpl");
 	}
 
 	@Bean
 	public JwtService libEdgeJwtService() {
-		return (JwtService) LibEdgeapplicationContext().getBean("libEdgeJwtService");
+		return (JwtService) libEdgeapplicationContext().getBean("libEdgeJwtService");
 	}
 
 	@Bean
 	public PipeService libEdgePipeService() {
-		return (PipeService) LibEdgeapplicationContext().getBean("pipeService");
+		return (PipeService) libEdgeapplicationContext().getBean("pipeService");
 	}
 
 	@Bean
 	public RateLimiterService rateLimiterService() {
-		return (RateLimiterService) LibEdgeapplicationContext().getBean("redisRateLimiter");
+		return (RateLimiterService) libEdgeapplicationContext().getBean("redisRateLimiter");
+	}
+
+	@Bean
+	public AuthenticationService libEdgeAuthenticationService(){
+		return (AuthenticationService)libEdgeapplicationContext().getBean("libEdgeAuthenticationService");
 	}
 
 }
