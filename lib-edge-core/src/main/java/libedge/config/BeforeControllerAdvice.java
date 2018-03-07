@@ -18,7 +18,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -125,8 +124,8 @@ public class BeforeControllerAdvice {
 
 		//是否标注了@Authentication
 		if (action.getAnnotation(Authentication.class) != null) {
-			boolean hasUserInfo = request.getSession().getAttribute("uid") != null
-							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("uid"));
+			boolean hasUserInfo = request.getSession().getAttribute("userid") != null
+							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("userid"));
 			if (!hasUserInfo) {
 				throw new GenericException("2411006", "unauthenticated");
 			}

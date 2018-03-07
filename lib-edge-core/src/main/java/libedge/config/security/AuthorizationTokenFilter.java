@@ -40,7 +40,7 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 		log.debug("filter start");
 		String auth = request.getHeader("Authorization");
 
-		if (auth != null && auth.startsWith("Bearer ")) {
+		if (auth != null) {
 			log.debug("通过sessionId，得到userIdentity");
 			Map<String, String> userIdentityMap = authenticationService.getUserDetailsFromSession(auth);
 
@@ -51,8 +51,8 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 			}
 
 			log.debug("filter:userIdentityMap: " + userIdentityMap);
-			if (userDetailsService != null && userIdentityMap.get("uid") != null) {
-				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("uid"));
+			if (userDetailsService != null && userIdentityMap.get("userid") != null) {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("userid"));
 
 				log.debug("配置用户权限");
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
