@@ -44,6 +44,7 @@ public class GlobalControllerExceptionHandler {
 	@ResponseStatus(HttpStatus.OK)
 	@ExceptionHandler({IllegalArgumentException.class})
 	public Map<String, String> handleException(IllegalArgumentException e) {
+		e.printStackTrace();
 		return ImmutableMap.of("code", "1911001", "message", e.getMessage());
 	}
 

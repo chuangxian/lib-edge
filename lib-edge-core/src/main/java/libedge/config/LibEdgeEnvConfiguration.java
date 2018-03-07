@@ -1,8 +1,6 @@
 package libedge.config;
 
-import libedge.annotations.Authentication;
 import libedge.config.security.UserDetailsServiceImpl;
-import libedge.config.security.WebSecurityConfig;
 import libedge.services.impl.AuthenticationService;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
@@ -47,8 +45,8 @@ public class LibEdgeEnvConfiguration {
 	}
 
 	@Bean
-	public AuthenticationService libEdgeAuthenticationService(){
-		return (AuthenticationService)libEdgeapplicationContext().getBean("libEdgeAuthenticationService");
+	public AuthenticationService libEdgeAuthenticationService() {
+		return (AuthenticationService) libEdgeapplicationContext().getBean("libEdgeAuthenticationService");
 	}
 
 }

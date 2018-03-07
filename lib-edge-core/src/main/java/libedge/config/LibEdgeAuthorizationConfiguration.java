@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -74,16 +75,16 @@ public class LibEdgeAuthorizationConfiguration {
 					@Value(REDIS_MAX_WAIT) String maxWait
 	) {
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
-		if(StringUtils.isNotBlank(minIdle)) {
+		if (StringUtils.isNotBlank(minIdle)) {
 			poolConfig.setMinIdle(Integer.valueOf(minIdle));
 		}
-		if(StringUtils.isNotBlank(maxIdle)) {
+		if (StringUtils.isNotBlank(maxIdle)) {
 			poolConfig.setMaxIdle(Integer.valueOf(maxIdle));
 		}
-		if(StringUtils.isNotBlank(maxActive)) {
+		if (StringUtils.isNotBlank(maxActive)) {
 			poolConfig.setMaxTotal(Integer.valueOf(maxActive));
 		}
-		if(StringUtils.isNotBlank(maxWait)) {
+		if (StringUtils.isNotBlank(maxWait)) {
 			poolConfig.setMaxWaitMillis(Integer.valueOf(maxWait));
 		}
 		JedisConnectionFactory factory = new JedisConnectionFactory(poolConfig);
@@ -116,7 +117,7 @@ public class LibEdgeAuthorizationConfiguration {
 	}
 
 	@Bean
-	public RedisTemplate libEdgeSessionRedisTemplate(){
+	public RedisTemplate libEdgeSessionRedisTemplate() {
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		JedisConnectionFactory factory = new JedisConnectionFactory(poolConfig);
 		factory.setHostName("192.168.33.10");
@@ -125,14 +126,17 @@ public class LibEdgeAuthorizationConfiguration {
 
 		RedisTemplate redisTemplate = new RedisTemplate();
 		redisTemplate.setConnectionFactory(factory);
+
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
-		redisTemplate.setValueSerializer(new StringRedisSerializer());
+		redisTemplate.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
+		redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
 		return redisTemplate;
 	}
 
 	@Bean
+	@Autowired
 	public AuthenticationService libEdgeAuthenticationService(
-					@Qualifier("libEdgeSessionRedisTemplate") RedisTemplate redisTemplate){
+					@Qualifier("libEdgeSessionRedisTemplate") RedisTemplate redisTemplate) {
 		return new AuthenticationService(redisTemplate);
 	}
 }

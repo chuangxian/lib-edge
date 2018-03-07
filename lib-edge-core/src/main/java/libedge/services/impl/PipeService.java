@@ -402,9 +402,10 @@ public class PipeService {
 			return null;
 		}
 		//如果没有加密secret，说明不需要将token传给service
-		String envEncryption = authentication.envEncryption() == null ?
-						((Authentication) controllerClass.getAnnotation(Authentication.class)).envEncryption() :
-						authentication.envEncryption();
+		String envEncryption = authentication.envEncryption();
+		if(StringUtils.isAllBlank(envEncryption) && controllerClass.getAnnotation(Authentication.class)!=null){
+			envEncryption = ((Authentication) controllerClass.getAnnotation(Authentication.class)).envEncryption();
+		}
 		if (StringUtils.isAllBlank(envEncryption)) {
 			return null;
 		}

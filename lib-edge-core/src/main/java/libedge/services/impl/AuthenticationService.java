@@ -2,7 +2,6 @@ package libedge.services.impl;
 
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
@@ -11,16 +10,15 @@ import java.util.Map;
  * @since 2018/3/6
  */
 
-@Component
 public class AuthenticationService {
 
 	private RedisTemplate redisTemplate;
 
-	public AuthenticationService(RedisTemplate redisTemplate){
+	public AuthenticationService(RedisTemplate redisTemplate) {
 		this.redisTemplate = redisTemplate;
 	}
 
-	public Map<String, String> getUserDetailsFromSession(String token){
+	public Map<String, String> getUserDetailsFromSession(String token) {
 		HashOperations<String, String, String> hash = redisTemplate.opsForHash();
 		return hash.entries(token);
 	}

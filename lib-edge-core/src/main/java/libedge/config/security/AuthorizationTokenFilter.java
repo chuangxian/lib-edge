@@ -49,6 +49,10 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 			for (String key : userIdentityMap.keySet()) {
 				session.setAttribute(key, userIdentityMap.get(key));
 			}
+			//TODO:现在放入uid，为了适应底层
+			if(userIdentityMap.get("userid")!=null) {
+				session.setAttribute("uid", userIdentityMap.get("userid"));
+			}
 
 			log.debug("filter:userIdentityMap: " + userIdentityMap);
 			if (userDetailsService != null && userIdentityMap.get("userid") != null) {

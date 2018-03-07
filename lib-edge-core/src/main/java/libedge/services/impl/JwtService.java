@@ -15,7 +15,6 @@ import java.util.Map;
 /**
  * @author yrw
  */
-@Component
 @Slf4j
 public class JwtService {
 
