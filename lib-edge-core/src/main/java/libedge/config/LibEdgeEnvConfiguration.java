@@ -1,7 +1,7 @@
 package libedge.config;
 
 import libedge.config.security.UserDetailsServiceImpl;
-import libedge.services.impl.AuthenticationService;
+import libedge.services.impl.SessionCacheService;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
 import libedge.services.impl.RateLimiterService;
@@ -45,8 +45,8 @@ public class LibEdgeEnvConfiguration {
 	}
 
 	@Bean
-	public AuthenticationService libEdgeAuthenticationService() {
-		return (AuthenticationService) libEdgeapplicationContext().getBean("libEdgeAuthenticationService");
+	public SessionCacheService libEdgeSessionCacheService() {
+		return (SessionCacheService) libEdgeapplicationContext().getBean("libEdgeSessionCacheService");
 	}
 
 }

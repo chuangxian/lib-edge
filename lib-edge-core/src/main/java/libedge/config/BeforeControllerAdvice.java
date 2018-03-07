@@ -124,8 +124,8 @@ public class BeforeControllerAdvice {
 
 		//是否标注了@Authentication
 		if (action.getAnnotation(Authentication.class) != null) {
-			boolean hasUserInfo = request.getSession().getAttribute("userid") != null
-							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("userid"));
+			boolean hasUserInfo = request.getSession().getAttribute("userId") != null
+							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("userId"));
 			if (!hasUserInfo) {
 				throw new GenericException("2411006", "unauthenticated");
 			}

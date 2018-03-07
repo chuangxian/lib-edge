@@ -1,11 +1,9 @@
 package libedge.config.security;
 
-import libedge.services.impl.AuthenticationService;
+import libedge.services.impl.SessionCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,8 +29,8 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 	private UserDetailsServiceImpl userDetailsService;
 
 	@Autowired
-	@Qualifier("libEdgeAuthenticationService")
-	private AuthenticationService authenticationService;
+	@Qualifier("libEdgeSessionCacheService")
+	private SessionCacheService sessionCacheService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -42,7 +40,7 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 
 		if (auth != null) {
 			log.debug("通过sessionId，得到userIdentity");
-			Map<String, String> userIdentityMap = authenticationService.getUserDetailsFromSession(auth);
+			Map<String, String> userIdentityMap = sessionCacheService.getState(auth);
 
 			//存入内存
 			HttpSession session = request.getSession();
@@ -50,13 +48,13 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 				session.setAttribute(key, userIdentityMap.get(key));
 			}
 			//TODO:现在放入uid，为了适应底层
-			if(userIdentityMap.get("userid")!=null) {
-				session.setAttribute("uid", userIdentityMap.get("userid"));
+			if(userIdentityMap.get("userId")!=null) {
+				session.setAttribute("uid", userIdentityMap.get("userId"));
 			}
 
 			log.debug("filter:userIdentityMap: " + userIdentityMap);
-			if (userDetailsService != null && userIdentityMap.get("userid") != null) {
-				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("userid"));
+			if (userDetailsService != null && userIdentityMap.get("userId") != null) {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("userId"));
 
 				log.debug("配置用户权限");
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

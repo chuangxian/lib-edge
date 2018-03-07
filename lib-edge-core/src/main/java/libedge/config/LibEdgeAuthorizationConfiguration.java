@@ -2,7 +2,7 @@ package libedge.config;
 
 import libedge.config.security.UserDetailsServiceImpl;
 import libedge.repository.RoleRepository;
-import libedge.services.impl.AuthenticationService;
+import libedge.services.impl.SessionCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,7 +126,6 @@ public class LibEdgeAuthorizationConfiguration {
 
 		RedisTemplate redisTemplate = new RedisTemplate();
 		redisTemplate.setConnectionFactory(factory);
-
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
 		redisTemplate.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
 		redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
@@ -135,8 +134,8 @@ public class LibEdgeAuthorizationConfiguration {
 
 	@Bean
 	@Autowired
-	public AuthenticationService libEdgeAuthenticationService(
+	public SessionCacheService libEdgeSessionCacheService(
 					@Qualifier("libEdgeSessionRedisTemplate") RedisTemplate redisTemplate) {
-		return new AuthenticationService(redisTemplate);
+		return new SessionCacheService(redisTemplate);
 	}
 }
