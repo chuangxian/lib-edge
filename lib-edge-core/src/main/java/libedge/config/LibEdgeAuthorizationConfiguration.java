@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -117,18 +116,24 @@ public class LibEdgeAuthorizationConfiguration {
 	}
 
 	@Bean
-	public RedisTemplate libEdgeSessionRedisTemplate() {
+	public RedisTemplate libEdgeSessionRedisTemplate(
+					@Value(REDIS_HOST_NAME) String hostName,
+					@Value(REDIS_PASSWORD) String password,
+					@Value(REDIS_PORT) int port
+	) {
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
 		JedisConnectionFactory factory = new JedisConnectionFactory(poolConfig);
-		factory.setHostName("192.168.33.10");
-		factory.setPort(6379);
+		factory.setHostName(hostName);
+		factory.setPassword(password);
+		factory.setPort(port);
 		factory.afterPropertiesSet();
 
 		RedisTemplate redisTemplate = new RedisTemplate();
 		redisTemplate.setConnectionFactory(factory);
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
-		redisTemplate.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
-		redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
+		redisTemplate.setValueSerializer(new StringRedisSerializer());
+		redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+		redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 		return redisTemplate;
 	}
 

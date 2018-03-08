@@ -22,12 +22,12 @@ import java.util.Map;
 
 public class SessionCacheService {
 
-	private RedisTemplate<String, Object> redisTemplate;
+	private RedisTemplate<String, String> redisTemplate;
 
 	@Value("${session.expire.seconds}")
 	private Integer expireSeconds;
 
-	public SessionCacheService(RedisTemplate<String, Object> redisTemplate){
+	public SessionCacheService(RedisTemplate<String, String> redisTemplate){
 		this.redisTemplate = redisTemplate;
 	}
 
