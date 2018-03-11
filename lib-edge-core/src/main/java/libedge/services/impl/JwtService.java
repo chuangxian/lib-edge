@@ -21,9 +21,6 @@ public class JwtService {
 	@Value("${jwt.algorithm}")
 	private String jwtAlgorithm;
 
-	@Value("${jwt.secret.envDecryption}")
-	private String envDecryption;
-
 	@Value("${token.jwt.expire.seconds}")
 	private Integer tokenExpire;
 

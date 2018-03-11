@@ -1,6 +1,6 @@
 package myzd;
 
-import libedge.services.impl.AuthenticationService;
+import libedge.services.impl.SessionCacheService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class AuthorizationTest {
 	private MockMvc mvc;
 
 	@MockBean
-	private AuthenticationService authenticationService;
+	private SessionCacheService sessionCacheService;
 
 	//has authority
 	@Test
@@ -44,18 +44,13 @@ public class AuthorizationTest {
 
 		Map<String, String> map = new HashMap<>();
 		map.put("name", "刘钱");
-		map.put("position", "高级后端工程师");
 		map.put("mobile", "15037889077");
-		map.put("gender", "1");
 		map.put("email", "qian.liu@mingyizhudao.com");
 		map.put("avatar", "https://p.qlogo.cn/bizmail/l9HibhqvRAIpIiaCn3dCrRYUH5t6EbQR7KTZU77F63UgtvqYyqTbcNtA/0");
-		map.put("status", "1");
-		map.put("bd_manager", "0");
 		map.put("staff_id", "1");
-		map.put("userid", "1");
-		map.put("department", "[14]");
+		map.put("uid", "1");
 
-		when(authenticationService.getUserDetailsFromSession(anyString())).thenReturn(map);
+		when(sessionCacheService.getState(anyString())).thenReturn(map);
 
 		Long id = System.currentTimeMillis();
 		mvc.perform(get(String.format("/api/v1/user/%d/authorize", id))
@@ -74,18 +69,13 @@ public class AuthorizationTest {
 
 		Map<String, String> map = new HashMap<>();
 		map.put("name", "刘钱");
-		map.put("position", "高级后端工程师");
 		map.put("mobile", "15037889077");
-		map.put("gender", "1");
 		map.put("email", "qian.liu@mingyizhudao.com");
 		map.put("avatar", "https://p.qlogo.cn/bizmail/l9HibhqvRAIpIiaCn3dCrRYUH5t6EbQR7KTZU77F63UgtvqYyqTbcNtA/0");
-		map.put("status", "1");
-		map.put("bd_manager", "0");
 		map.put("staff_id", "1");
-		map.put("userid", "1");
-		map.put("department", "[14]");
+		map.put("uid", "1");
 
-		when(authenticationService.getUserDetailsFromSession(anyString())).thenReturn(map);
+		when(sessionCacheService.getState(anyString())).thenReturn(map);
 
 		Long id = System.currentTimeMillis();
 		mvc.perform(post(String.format("/api/v1/user/authorize", id))
@@ -106,18 +96,13 @@ public class AuthorizationTest {
 
 		Map<String, String> map = new HashMap<>();
 		map.put("name", "刘钱");
-		map.put("position", "高级后端工程师");
 		map.put("mobile", "15037889077");
-		map.put("gender", "1");
 		map.put("email", "qian.liu@mingyizhudao.com");
 		map.put("avatar", "https://p.qlogo.cn/bizmail/l9HibhqvRAIpIiaCn3dCrRYUH5t6EbQR7KTZU77F63UgtvqYyqTbcNtA/0");
-		map.put("status", "1");
-		map.put("bd_manager", "0");
 		map.put("staff_id", "5");
-		map.put("userid", "5");
-		map.put("department", "[14]");
+		map.put("uid", "5");
 
-		when(authenticationService.getUserDetailsFromSession(anyString())).thenReturn(map);
+		when(sessionCacheService.getState(anyString())).thenReturn(map);
 
 		mvc.perform(get("/api/v1/user/19960519/authorize")
 						.header("Authorization", "fcbb276443dc6aa29bbdfc30119b6395")
@@ -134,18 +119,13 @@ public class AuthorizationTest {
 
 		Map<String, String> map = new HashMap<>();
 		map.put("name", "刘钱");
-		map.put("position", "高级后端工程师");
 		map.put("mobile", "15037889077");
-		map.put("gender", "1");
 		map.put("email", "qian.liu@mingyizhudao.com");
 		map.put("avatar", "https://p.qlogo.cn/bizmail/l9HibhqvRAIpIiaCn3dCrRYUH5t6EbQR7KTZU77F63UgtvqYyqTbcNtA/0");
-		map.put("status", "1");
-		map.put("bd_manager", "0");
 		map.put("staff_id", "9998");
-		map.put("userid", "9998");
-		map.put("department", "[14]");
+		map.put("uid", "9998");
 
-		when(authenticationService.getUserDetailsFromSession(anyString())).thenReturn(map);
+		when(sessionCacheService.getState(anyString())).thenReturn(map);
 
 		mvc.perform(get("/api/v1/user/19960519/authorize")
 						.header("Authorization", "fcbb276443dc6aa29bbdfc30119b6395")

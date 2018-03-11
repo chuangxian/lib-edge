@@ -47,14 +47,10 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 			for (String key : userIdentityMap.keySet()) {
 				session.setAttribute(key, userIdentityMap.get(key));
 			}
-			//TODO:现在放入uid，为了适应底层
-			if(userIdentityMap.get("userId")!=null) {
-				session.setAttribute("uid", userIdentityMap.get("userId"));
-			}
 
 			log.debug("filter:userIdentityMap: " + userIdentityMap);
-			if (userDetailsService != null && userIdentityMap.get("userId") != null) {
-				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("userId"));
+			if (userDetailsService != null && userIdentityMap.get("uid") != null) {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("uid"));
 
 				log.debug("配置用户权限");
 				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
