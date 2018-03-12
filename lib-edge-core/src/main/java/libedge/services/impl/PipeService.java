@@ -305,8 +305,13 @@ public class PipeService {
 		} else if (clientResponse.code() >= HTTP_SERVER_ERROR) {
 			//封装成ResultWrapper，错误信息写在message里
 			return new ResultWrapper<String>() {{
-				setCode(1000000);
-				setMessage(clientResponse.message());
+				String message = clientResponse.body().string();
+				if(message.contains("code")) {
+					setCode(Integer.valueOf(message.substring(9, 16)));
+				}
+				if(message.contains("message")){
+					setMessage(message.substring(29, message.length()-2));
+				}
 			}};
 		} else {
 			//其他结果，原样返回
