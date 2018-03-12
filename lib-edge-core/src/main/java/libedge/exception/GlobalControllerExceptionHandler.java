@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Map;
 
 /**
@@ -27,6 +28,12 @@ public class GlobalControllerExceptionHandler {
 		String message = String.valueOf(cause.getMessage());
 		if (GenericException.class.isInstance(throwable)) {
 			return ImmutableMap.of("message", message, "code", ((GenericException) throwable).getCode());
+		}
+		if(throwable instanceof UndeclaredThrowableException){
+			Throwable exception = ((UndeclaredThrowableException) throwable).getUndeclaredThrowable();
+			if(exception instanceof GenericException){
+				return ImmutableMap.of("message", message, "code", ((GenericException) exception).getCode());
+			}
 		}
 		log.error("Expected error. ", throwable);
 		return ImmutableMap.of("message", message, "code", "1998001");
