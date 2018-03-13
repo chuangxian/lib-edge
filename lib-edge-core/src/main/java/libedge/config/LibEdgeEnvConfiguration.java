@@ -1,13 +1,14 @@
 package libedge.config;
 
 import libedge.config.security.UserDetailsServiceImpl;
-import libedge.services.impl.SessionCacheService;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
 import libedge.services.impl.RateLimiterService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.ConfigurableEnvironment;
 
 /**
  * @author yrw
@@ -16,37 +17,43 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class LibEdgeEnvConfiguration {
 
-	@Bean
-	public AnnotationConfigApplicationContext libEdgeapplicationContext() {
-		return new AnnotationConfigApplicationContext(
-						LibEdgePipeConfiguration.class,
-						LibEdgeAuthorizationConfiguration.class,
-						LibEdgeRateLimitConfiguration.class);
-	}
+  @Autowired
+  ConfigurableEnvironment env;
 
-	@Bean
-	public UserDetailsServiceImpl userDetailsServiceImpl() {
-		return (UserDetailsServiceImpl) libEdgeapplicationContext().getBean("userDetailsServiceImpl");
-	}
+  private static AnnotationConfigApplicationContext internalContext;
 
-	@Bean
-	public JwtService libEdgeJwtService() {
-		return (JwtService) libEdgeapplicationContext().getBean("libEdgeJwtService");
-	}
+  public AnnotationConfigApplicationContext libEdgeApplicationContext() {
+    if (internalContext != null) return internalContext;
+    AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+    context.register(
+      LibEdgePipeConfiguration.class,
+      LibEdgeAuthorizationConfiguration.class,
+      LibEdgeRateLimitConfiguration.class
+    );
+    context.setEnvironment(env);
+    context.refresh();
+    internalContext = context;
+    return context;
+  }
 
-	@Bean
-	public PipeService libEdgePipeService() {
-		return (PipeService) libEdgeapplicationContext().getBean("pipeService");
-	}
+  @Bean
+  public UserDetailsServiceImpl userDetailsServiceImpl() {
+    return (UserDetailsServiceImpl) libEdgeApplicationContext().getBean("userDetailsServiceImpl");
+  }
 
-	@Bean
-	public RateLimiterService rateLimiterService() {
-		return (RateLimiterService) libEdgeapplicationContext().getBean("redisRateLimiter");
-	}
+  @Bean
+  public JwtService libEdgeJwtService() {
+    return (JwtService) libEdgeApplicationContext().getBean("libEdgeJwtService");
+  }
 
-	@Bean
-	public SessionCacheService libEdgeSessionCacheService() {
-		return (SessionCacheService) libEdgeapplicationContext().getBean("libEdgeSessionCacheService");
-	}
+  @Bean
+  public PipeService libEdgePipeService() {
+    return (PipeService) libEdgeApplicationContext().getBean("pipeService");
+  }
+
+  @Bean
+  public RateLimiterService rateLimiterService() {
+    return (RateLimiterService) libEdgeApplicationContext().getBean("redisRateLimiter");
+  }
 
 }
