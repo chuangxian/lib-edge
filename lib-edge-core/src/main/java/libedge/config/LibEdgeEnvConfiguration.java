@@ -4,11 +4,13 @@ import libedge.config.security.UserDetailsServiceImpl;
 import libedge.services.impl.JwtService;
 import libedge.services.impl.PipeService;
 import libedge.services.impl.RateLimiterService;
+import libedge.services.impl.SessionCacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.data.redis.core.RedisTemplate;
 
 /**
  * @author yrw
@@ -56,4 +58,8 @@ public class LibEdgeEnvConfiguration {
     return (RateLimiterService) libEdgeApplicationContext().getBean("redisRateLimiter");
   }
 
+  @Bean
+  public SessionCacheService libEdgeSessionCacheService(){
+    return (SessionCacheService) libEdgeApplicationContext().getBean("libEdgeSessionCacheService");
+  }
 }
