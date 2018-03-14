@@ -33,61 +33,62 @@ import java.util.ArrayList;
 @Profile({"!prod"})
 public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
 
-  private final static String SWAGGER_UI_HEADER = "Referer";
+	private final static String SWAGGER_UI_HEADER = "Referer";
 
-  private final static String SWAGGER_UI_URL_HOST = "swagger-ui.mingyizhudao.com";
+	private final static String SWAGGER_UI_URL_HOST = "swagger-ui.mingyizhudao.com";
 
-  /**
-   * 初始化文档信息
-   *
-   * @return 文档信息
-   */
-  private ApiInfo initApiInfo() {
-    Contact contact = new Contact("后端团队", "", "");
-    return new ApiInfo(
-      "test",
-      "test",
-      "1.0",
-      "",
-      contact,
-      "Apache 2.0",
-      "http://www.apache.org/licenses/LICENSE-2.0",
-      new ArrayList<>()
-    );
-  }
+	/**
+	 * 初始化文档信息
+	 *
+	 * @return 文档信息
+	 */
+	private ApiInfo initApiInfo() {
+		Contact contact = new Contact("后端团队", "", "");
+		return new ApiInfo(
+						"test",
+						"test",
+						"1.0",
+						"",
+						contact,
+						"Apache 2.0",
+						"http://www.apache.org/licenses/LICENSE-2.0",
+						new ArrayList<>()
+		);
+	}
 
-  @Bean
-  public Docket api() {
-    Docket docket = new Docket(DocumentationType.SWAGGER_2);
-    return docket
-      .apiInfo(initApiInfo())
-      .select()
-      .apis(RequestHandlerSelectors.basePackage("myzd.api.controllers"))
-      .paths(PathSelectors.any())
-      .build();
-  }
+	@Bean
+	public Docket api() {
+		Docket docket = new Docket(DocumentationType.SWAGGER_2);
+		return docket
+						.apiInfo(initApiInfo())
+						.select()
+						.apis(RequestHandlerSelectors.basePackage("myzd.api.controllers"))
+						.paths(PathSelectors.any())
+						.build();
+	}
 
-  @Bean
-  public OncePerRequestFilter swaggerCorsFilter() {
-    return new OncePerRequestFilter() {
-      @Override
-      protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getHeader(SWAGGER_UI_HEADER) != null && request.getHeader(SWAGGER_UI_HEADER).contains(SWAGGER_UI_URL_HOST)) {
-          response.addHeader(
-            "Access-Control-Allow-Origin",
-            "http://swagger-ui.mingyizhudao.com"
-          );
-          response.addHeader(
-            "Access-Control-Allow-Headers",
-            "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Authentication"
-          );
-          response.addHeader(
-            "Access-Control-Allow-Methods",
-            "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-          );
-        }
-        filterChain.doFilter(request, response);
-      }
-    };
-  }
+	@Bean
+	public OncePerRequestFilter swaggerCorsFilter() {
+		return new OncePerRequestFilter() {
+			@Override
+			protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+				if (request.getHeader(SWAGGER_UI_HEADER) != null && request.getHeader(SWAGGER_UI_HEADER).contains(SWAGGER_UI_URL_HOST)) {
+					response.addHeader(
+									"Access-Control-Allow-Origin",
+									"http://swagger-ui.mingyizhudao.com"
+					);
+					response.addHeader(
+									"Access-Control-Allow-Headers",
+									"DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Authentication"
+					);
+					response.addHeader(
+									"Access-Control-Allow-Methods",
+									"GET, POST, PUT, DELETE, PATCH, OPTIONS"
+					);
+				}
+				filterChain.doFilter(request, response);
+			}
+		};
+	}
+
 }

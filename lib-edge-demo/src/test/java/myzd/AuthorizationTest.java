@@ -1,6 +1,6 @@
 package myzd;
 
-import libedge.services.impl.SessionCacheService;
+import libedge.services.impl.CacheService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class AuthorizationTest {
 	private MockMvc mvc;
 
 	@MockBean
-	private SessionCacheService sessionCacheService;
+	private CacheService sessionCacheService;
 
 	//has authority
 	@Test

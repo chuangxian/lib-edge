@@ -47,8 +47,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthorizationTokenFilter authorizationTokenFilter(
-	) {
+	public AuthorizationTokenFilter authorizationTokenFilter() {
 		return new AuthorizationTokenFilter();
 	}
 }

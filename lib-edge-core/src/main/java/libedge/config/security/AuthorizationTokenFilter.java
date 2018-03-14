@@ -1,6 +1,6 @@
 package libedge.config.security;
 
-import libedge.services.impl.SessionCacheService;
+import libedge.services.impl.CacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -29,18 +30,25 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 	private UserDetailsServiceImpl userDetailsService;
 
 	@Autowired
-	@Qualifier("libEdgeSessionCacheService")
-	private SessionCacheService sessionCacheService;
+	@Qualifier("libEdgeCacheService")
+	private CacheService cacheService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 					throws ServletException, IOException {
 		log.debug("filter start");
-		String auth = request.getHeader("Authorization");
-
+		String auth = null;
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if ("token".equals(cookie.getName())) {
+					auth = cookie.getValue();
+				}
+			}
+		}
 		if (auth != null) {
 			log.debug("通过sessionId，得到userIdentity");
-			Map<String, String> userIdentityMap = sessionCacheService.getState(auth);
+			Map<String, String> userIdentityMap = cacheService.getState(auth);
 
 			//存入内存
 			HttpSession session = request.getSession();

@@ -2,7 +2,7 @@ package libedge.config;
 
 import libedge.config.security.UserDetailsServiceImpl;
 import libedge.repository.RoleRepository;
-import libedge.services.impl.SessionCacheService;
+import libedge.services.impl.CacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +116,7 @@ public class LibEdgeAuthorizationConfiguration {
 	}
 
 	@Bean
-	public RedisTemplate libEdgeSessionRedisTemplate(
+	public RedisTemplate libEdgeCacheRedisTemplate(
 					@Value(REDIS_HOST_NAME) String hostName,
 					@Value(REDIS_PASSWORD) String password,
 					@Value(REDIS_PORT) int port
@@ -139,8 +139,8 @@ public class LibEdgeAuthorizationConfiguration {
 
 	@Bean
 	@Autowired
-	public SessionCacheService libEdgeSessionCacheService(
-					@Qualifier("libEdgeSessionRedisTemplate") RedisTemplate redisTemplate) {
-		return new SessionCacheService(redisTemplate);
+	public CacheService libEdgeCacheService(
+					@Qualifier("libEdgeCacheRedisTemplate") RedisTemplate redisTemplate) {
+		return new CacheService(redisTemplate);
 	}
 }

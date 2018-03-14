@@ -6,11 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -60,16 +59,16 @@ public class LibEdgeRateLimitConfiguration {
 					@Value(REDIS_MAX_WAIT) String maxWait
 	) {
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
-		if(StringUtils.isNotBlank(minIdle)) {
+		if (StringUtils.isNotBlank(minIdle)) {
 			poolConfig.setMinIdle(Integer.valueOf(minIdle));
 		}
-		if(StringUtils.isNotBlank(maxIdle)) {
+		if (StringUtils.isNotBlank(maxIdle)) {
 			poolConfig.setMaxIdle(Integer.valueOf(maxIdle));
 		}
-		if(StringUtils.isNotBlank(maxActive)) {
+		if (StringUtils.isNotBlank(maxActive)) {
 			poolConfig.setMaxTotal(Integer.valueOf(maxActive));
 		}
-		if(StringUtils.isNotBlank(maxWait)) {
+		if (StringUtils.isNotBlank(maxWait)) {
 			poolConfig.setMaxWaitMillis(Integer.valueOf(maxWait));
 		}
 		JedisConnectionFactory factory = new JedisConnectionFactory(poolConfig);
@@ -90,7 +89,8 @@ public class LibEdgeRateLimitConfiguration {
 	@Autowired
 	public RateLimiterService redisRateLimiter(
 					@Qualifier("libEdgeRateLimiterRedisTemplate") RedisTemplate<String, String> redisTemplate,
-					@Qualifier("libEdgeRateLimiterRedisScript") RedisScript<List<Long>> redisScript) {
+					@Qualifier("libEdgeRateLimiterRedisScript") RedisScript<List<Long>> redisScript,
+					@Autowired ApplicationContext applicationContext) {
 		return new RateLimiterService(redisTemplate, redisScript);
 	}
 }

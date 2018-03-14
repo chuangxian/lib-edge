@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 
 import java.io.IOException;
@@ -26,42 +25,37 @@ import java.io.IOException;
 @Configuration
 public class LibEdgePipeConfiguration {
 
-  @Autowired
-  private ConfigurableEnvironment environment;
+	@Bean
+	public ObjectMapper libEdgePipeObjectMapper() throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		mapper.registerModule(new JavaTimeModule());
+		return mapper;
+	}
 
-  @Bean
-  public ObjectMapper libEdgePipeObjectMapper() throws IOException {
-//		MutablePropertySources propertySources = environment.getPropertySources();
-//		propertySources.addFirst(new ResourcePropertySource("classpath:application.properties"));
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    mapper.registerModule(new JavaTimeModule());
-    return mapper;
-  }
+	@Bean
+	@Autowired
+	public PipeService pipeService(
+					Environment env,
+					@Qualifier("libEdgePipeOkHttpClient") OkHttpClient okHttpClient,
+					@Qualifier("libEdgePipeObjectMapper") ObjectMapper objectMapper,
+					@Qualifier("libEdgeJwtService") JwtService jwtService) {
+		return new PipeService(env, okHttpClient, objectMapper, jwtService);
+	}
 
-  @Bean
-  @Autowired
-  public PipeService pipeService(
-    Environment env,
-    @Qualifier("libEdgePipeOkHttpClient") OkHttpClient okHttpClient,
-    @Qualifier("libEdgePipeObjectMapper") ObjectMapper objectMapper,
-    @Qualifier("libEdgeJwtService") JwtService jwtService) {
-    return new PipeService(env, okHttpClient, objectMapper, jwtService);
-  }
+	@Bean
+	public OkHttpClient libEdgePipeOkHttpClient() {
+		return new OkHttpClient.Builder()
+						.followRedirects(false)
+						.followSslRedirects(false)
+						.build();
+	}
 
-  @Bean
-  public OkHttpClient libEdgePipeOkHttpClient() {
-    return new OkHttpClient.Builder()
-      .followRedirects(false)
-      .followSslRedirects(false)
-      .build();
-  }
-
-  @Bean
-  public JwtService libEdgeJwtService() {
-    return new JwtService();
-  }
+	@Bean
+	public JwtService libEdgeJwtService() {
+		return new JwtService();
+	}
 }

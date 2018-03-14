@@ -145,7 +145,7 @@ public class BeforeControllerAdvice {
 				capacity = rateLimit.capacity();
 			}
 			if (rate == -1) {
-				throw new GenericException("1911010", "invalid RateLimiter paramter[rate]");
+				throw new GenericException("1911010", "invalid RateLimiter parameter[rate]");
 			}
 			String clientIp = request.getRemoteAddr();
 			String requestAction = action.toString();
