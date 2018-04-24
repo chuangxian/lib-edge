@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.10.RELEASE'
+        springBootVersion = '1.5.12.RELEASE'
     }
     repositories {
         maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
@@ -32,7 +32,7 @@ dependencies {
     compile('org.projectlombok:lombok')
     compile('org.springframework.boot:spring-boot-starter-web')
     compile("org.springframework.boot:spring-boot-starter-security")
-    compile group: 'org.springframework', name: 'spring-jdbc', version: '5.0.2.RELEASE'
+    compile group: 'org.springframework', name: 'spring-jdbc'
     compile "io.prometheus:simpleclient_spring_boot:0.0.23"
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
