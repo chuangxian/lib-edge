@@ -1,5 +1,6 @@
 package libedge.domain.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,15 +10,16 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class ResultWrapper<T> {
-	private int code;
-	private String message;
-	private T data;
+  private int code;
+  private String message;
+  private T data;
 
-	@SuppressWarnings("unchecked")
-	public ResultWrapper(T data) {
-		this.code = 1000000;
-		this.message = "OK";
-		this.data = data;
-	}
+  @SuppressWarnings("unchecked")
+  public ResultWrapper(T data) {
+    this.code = 1000000;
+    this.message = "OK";
+    this.data = data;
+  }
 }
