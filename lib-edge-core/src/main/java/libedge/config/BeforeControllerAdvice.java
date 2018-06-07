@@ -127,6 +127,7 @@ public class BeforeControllerAdvice {
 			boolean hasUserInfo = request.getSession().getAttribute("uid") != null
 							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("uid"));
 			if (!hasUserInfo) {
+				log.error("Failed authenticate in lib-edge around handing.");
 				throw new GenericException("2411006", "unauthenticated");
 			}
 		}
@@ -145,12 +146,13 @@ public class BeforeControllerAdvice {
 				capacity = rateLimit.capacity();
 			}
 			if (rate == -1) {
-				throw new GenericException("1911010", "invalid RateLimiter paramter[rate]");
+				throw new GenericException("1911010", "invalid RateLimiter parameter[rate]");
 			}
 			String clientIp = request.getRemoteAddr();
 			String requestAction = action.toString();
 			if (!rateLimiterService.isAllowed(clientIp, requestAction,
 							ImmutableMap.of(REPLENISH_RATE_KEY, rate, BURST_CAPACITY_KEY, capacity))) {
+			  log.error("too many requests!");
 				throw new TooManyRequestsException("too many requests!");
 			}
 		}

@@ -5,6 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import libedge.domain.exceptions.GenericException;
 import libedge.domain.exceptions.TooManyRequestsException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Map;
 
@@ -73,5 +77,18 @@ public class GlobalControllerExceptionHandler {
 		log.warn("参数校验失败: {}", message.toString());
 		return ImmutableMap.of("code", "1911001", "message", message.toString());
 	}
+
+  @ResponseBody
+  @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+  @ExceptionHandler({IOException.class})
+  public Object handleException(IOException e) {
+    String searchStr = "Broken pipe";
+    if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), searchStr)) {
+      log.error("Broken pipe", e);
+      return null;
+    } else {
+      return new HttpEntity<>(e.getMessage());
+    }
+  }
 
 }
