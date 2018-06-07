@@ -92,12 +92,12 @@ public class BeforeControllerAdvice {
 		HttpServletRequest request = attributes.getRequest();
 
 		Map<String, String> requestInfoMap = new LinkedHashMap<>();
-		String clientIpAdr = RequestHelper.getRealIp(request);
+		String clientIpAddr = RequestHelper.getRealIp(request);
 		String requestUri = request.getRequestURI();
 		String requestMethod = request.getMethod();
 
 		int size = 0;
-		requestInfoMap.put(TemplateEnum.REMOTE_HOST, clientIpAdr);
+		requestInfoMap.put(TemplateEnum.REMOTE_HOST, clientIpAddr);
 		requestInfoMap.put(TemplateEnum.REQUEST_METHOD, requestMethod);
 		requestInfoMap.put(TemplateEnum.RESPONSE_BODY_SIZE, String.valueOf(size));
 		requestInfoMap.put(TemplateEnum.REQUEST_URI, requestUri);
