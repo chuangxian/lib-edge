@@ -360,7 +360,7 @@ public class PipeService {
 		int i;
 		for (i = 1; i < typeStrings.length; i++) {
 			if (globalTypes[0] instanceof ParameterizedType) {
-				log.debug("第" + i + "层，泛型值为: {}", globalTypes);
+				log.debug("第" + i + "层，泛型值为: {}", (Object[]) globalTypes);
 				globalTypes = ((ParameterizedType) globalTypes[0]).getActualTypeArguments();
 			}
 		}

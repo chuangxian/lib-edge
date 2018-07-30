@@ -30,7 +30,7 @@ public class GlobalControllerExceptionHandler {
 	public static Map<String, String> errorResponse(Throwable throwable) {
 		Throwable cause = Throwables.getRootCause(throwable);
 		String message = String.valueOf(cause.getMessage());
-		if (GenericException.class.isInstance(throwable)) {
+		if (throwable instanceof GenericException) {
 			return ImmutableMap.of("message", message, "code", ((GenericException) throwable).getCode());
 		}
 		if(throwable instanceof UndeclaredThrowableException){
@@ -84,7 +84,7 @@ public class GlobalControllerExceptionHandler {
   public Object handleException(IOException e) {
     String searchStr = "Broken pipe";
     if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), searchStr)) {
-      log.error("Broken pipe", e);
+      log.warn("Broken pipe", e);
       return null;
     } else {
       return new HttpEntity<>(e.getMessage());
