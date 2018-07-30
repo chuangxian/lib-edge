@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -78,7 +78,7 @@ public class AuthorizationTest {
 		when(sessionCacheService.getState(anyString())).thenReturn(map);
 
 		Long id = System.currentTimeMillis();
-		mvc.perform(post(String.format("/api/v1/user/authorize", id))
+		mvc.perform(post("/api/v1/user/authorize")
 						.header("Authorization", "fcbb276443dc6aa29bbdfc30119b6395")
 						.content("{\"name\" : \"create a user\"}")
 						.contentType(MediaType.APPLICATION_JSON)

@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.12.RELEASE'
+        springBootVersion = '2.0.3.RELEASE'
     }
     repositories {
         maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
@@ -13,10 +13,8 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 
-jar {
-    baseName = 'lib-edge-core'
-    version = '0.0.1-SNAPSHOT'
-}
+archivesBaseName = "lib-edge-core"
+version = "0.0.1-SNAPSHOT"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -26,17 +24,22 @@ repositories {
 
 dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '22.0'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
     compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
     compile group: 'com.auth0', name: 'java-jwt', version: '3.2.0'
-    compile('org.projectlombok:lombok')
-    compile('org.springframework.boot:spring-boot-starter-web')
-    compile("org.springframework.boot:spring-boot-starter-security")
-    compile group: 'org.springframework', name: 'spring-jdbc'
+    compile('org.projectlombok:lombok:1.18.0')
+    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
+      {
+          exclude group: "org.springframework.boot", module: "spring-boot-starter-tomcat"
+      }
+    compile group: "org.springframework.boot", name: "spring-boot-starter-undertow", version: "${springBootVersion}"
+    compile("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
+    compile group: 'org.springframework', name: 'spring-jdbc', version: '5.0.8.RELEASE'
     compile "io.prometheus:simpleclient_spring_boot:0.0.23"
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
+    compile group: "org.springframework.boot", name: "spring-boot-starter-data-redis", version: "${springBootVersion}"
+    compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
     compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.8.6'
 
-    runtime('mysql:mysql-connector-java')
+    runtime('mysql:mysql-connector-java:6.0.6')
 }

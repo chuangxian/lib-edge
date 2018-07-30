@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.12.RELEASE'
+        springBootVersion = '2.0.3.RELEASE'
     }
     repositories {
         maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
@@ -13,10 +13,8 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 
-jar {
-    baseName = 'lib-edge-demo'
-    version = '0.0.1-SNAPSHOT'
-}
+archivesBaseName = "lib-edge-demo"
+version = "0.0.1-SNAPSHOT"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -26,8 +24,6 @@ repositories {
 
 dependencies {
     compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.7.0'
-
-    testCompile('org.springframework.boot:spring-boot-starter-test')
-
+    testCompile("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
     compile project(":lib-edge-core")
 }

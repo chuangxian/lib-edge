@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 @Slf4j
 @ControllerAdvice(basePackages = "myzd.api.controllers")
 @Profile({"!prod"})
-public class SwaggerConfiguration extends WebMvcConfigurerAdapter {
+public class SwaggerConfiguration implements WebMvcConfigurer {
 
   private final static String SWAGGER_UI_HEADER = "Referer";
 
