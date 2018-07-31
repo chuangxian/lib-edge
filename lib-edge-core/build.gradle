@@ -15,6 +15,10 @@ apply plugin: 'org.springframework.boot'
 
 archivesBaseName = "lib-edge-core"
 version = "0.0.1-SNAPSHOT"
+jar {
+    baseName = 'lib-edge-core'
+    version = '0.0.1-SNAPSHOT'
+}
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
