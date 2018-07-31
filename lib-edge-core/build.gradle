@@ -18,6 +18,7 @@ version = "0.0.1-SNAPSHOT"
 jar {
     baseName = 'lib-edge-core'
     version = '0.0.1-SNAPSHOT'
+    enabled = true
 }
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
