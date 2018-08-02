@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.connection.RedisPassword;
+import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -70,10 +72,9 @@ public class LibEdgeRateLimitConfiguration {
 		if(StringUtils.isNotBlank(maxWait)) {
 			poolConfig.setMaxWaitMillis(Integer.valueOf(maxWait));
 		}
-		JedisConnectionFactory factory = new JedisConnectionFactory(poolConfig);
-		factory.setHostName(hostName);
-		factory.setPassword(password);
-		factory.setPort(port);
+    RedisSentinelConfiguration sentinelConfiguration = new RedisSentinelConfiguration().sentinel(hostName, port);
+    sentinelConfiguration.setPassword(RedisPassword.of(password));
+		JedisConnectionFactory factory = new JedisConnectionFactory(sentinelConfiguration, poolConfig);
 		factory.afterPropertiesSet();
 
 		RedisSerializer serializer = new StringRedisSerializer();
