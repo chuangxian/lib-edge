@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -127,7 +128,7 @@ public class LibEdgeAuthorizationConfiguration {
 		envConfiguration.setHostName(hostName);
 		envConfiguration.setPort(port);
 		envConfiguration.setPassword(RedisPassword.of(password));
-		JedisConnectionFactory factory = new JedisConnectionFactory(envConfiguration);
+		JedisConnectionFactory factory = new JedisConnectionFactory(envConfiguration, JedisClientConfiguration.defaultConfiguration());
 		factory.afterPropertiesSet();
 
 		RedisTemplate redisTemplate = new RedisTemplate();
