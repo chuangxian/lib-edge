@@ -127,7 +127,7 @@ public class BeforeControllerAdvice {
 			boolean hasUserInfo = request.getSession().getAttribute("uid") != null
 							&& StringUtils.isNotBlank((String) request.getSession().getAttribute("uid"));
 			if (!hasUserInfo) {
-				log.error("Failed authenticate in lib-edge around handing.");
+				log.warn("Failed authenticate in lib-edge around handing.");
 				throw new GenericException("2411006", "unauthenticated");
 			}
 		}
