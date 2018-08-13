@@ -25,40 +25,45 @@ import java.util.Map;
 @Slf4j
 public class AuthorizationTokenFilter extends OncePerRequestFilter {
 
-	@Autowired
-	private UserDetailsServiceImpl userDetailsService;
+  @Autowired
+  private UserDetailsServiceImpl userDetailsService;
 
-	@Autowired
-	@Qualifier("libEdgeSessionCacheService")
-	private SessionCacheService sessionCacheService;
+  @Autowired
+  @Qualifier("libEdgeSessionCacheService")
+  private SessionCacheService sessionCacheService;
 
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-					throws ServletException, IOException {
-		log.debug("filter start");
-		String auth = request.getHeader("Authorization");
+  @Override
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    throws ServletException, IOException {
+    log.debug("filter start");
+    String auth = request.getHeader("Authorization");
 
-		if (auth != null) {
-			log.debug("通过sessionId，得到userIdentity");
-			Map<String, String> userIdentityMap = sessionCacheService.getState(auth);
+    if (auth != null) {
+      //兼容是否有Bearer前缀
+      if (auth.startsWith("Bearer ")) {
+        auth = auth.substring(7);
+      }
 
-			//存入内存
-			HttpSession session = request.getSession();
-			for (String key : userIdentityMap.keySet()) {
-				session.setAttribute(key, userIdentityMap.get(key));
-			}
+      log.debug("通过sessionId，得到userIdentity");
+      Map<String, String> userIdentityMap = sessionCacheService.getState(auth);
 
-			log.debug("filter:userIdentityMap: " + userIdentityMap);
-			if (userDetailsService != null && userIdentityMap.get("uid") != null) {
-				UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("uid"));
+      //存入内存
+      HttpSession session = request.getSession();
+      for (String key : userIdentityMap.keySet()) {
+        session.setAttribute(key, userIdentityMap.get(key));
+      }
 
-				log.debug("配置用户权限");
-				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				SecurityContextHolder.getContext().setAuthentication(authentication);
-			}
-		}
-		log.debug("filter over");
-		filterChain.doFilter(request, response);
-	}
+      log.debug("filter:userIdentityMap: " + userIdentityMap);
+      if (userDetailsService != null && userIdentityMap.get("uid") != null) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentityMap.get("uid"));
+
+        log.debug("配置用户权限");
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+      }
+    }
+    log.debug("filter over");
+    filterChain.doFilter(request, response);
+  }
 }
