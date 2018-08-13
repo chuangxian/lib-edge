@@ -39,6 +39,11 @@ public class AuthorizationTokenFilter extends OncePerRequestFilter {
 		String auth = request.getHeader("Authorization");
 
 		if (auth != null) {
+            //兼容是否有Bearer前缀
+            if (auth.startsWith("Bearer ")) {
+              auth = auth.substring(7);
+            }
+
 			log.debug("通过sessionId，得到userIdentity");
 			Map<String, String> userIdentityMap = sessionCacheService.getState(auth);
 
