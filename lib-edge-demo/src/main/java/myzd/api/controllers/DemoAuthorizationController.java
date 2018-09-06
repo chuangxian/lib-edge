@@ -37,7 +37,7 @@ public class DemoAuthorizationController {
 					@PathVariable("id") @Max(value = 100) Long id
 	) {
 		return new ResultWrapper<User>() {{
-			setCode(1000000);
+			setCode("1000000");
 			setMessage("OK");
 			setData(new User() {{
 				setId(id);
