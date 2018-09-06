@@ -307,7 +307,7 @@ public class PipeService {
 			return new ResultWrapper<String>() {{
 				String message = clientResponse.body().string();
 				if(message.contains("code")) {
-					setCode(Integer.valueOf(message.substring(9, 16)));
+					setCode(message.substring(9, 16));
 				}
 				if(message.contains("message")){
 					setMessage(message.substring(29, message.length()-2));

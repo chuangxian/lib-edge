@@ -126,7 +126,7 @@ public class MockRearController {
 	) {
 		return new ResultWrapper<User>() {{
 			setMessage("OK");
-			setCode(1000000);
+			setCode("1000000");
 			setData(new User() {{
 				setId(id);
 				setName("Name of " + id);
