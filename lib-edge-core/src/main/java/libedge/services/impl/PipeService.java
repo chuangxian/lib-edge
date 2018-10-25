@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import libedge.annotations.Authentication;
 import libedge.annotations.PipeConfig;
-import libedge.annotations.SetHeaders;
 import libedge.domain.exceptions.GenericException;
 import libedge.domain.request.ResultWrapper;
 import libedge.utils.RequestHelper;
@@ -269,13 +268,15 @@ public class PipeService {
 
 		//构建一个request请求
 		RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), toByte(requestBody));
-		Request clientRequest = new Request.Builder()
-						.url(clientUri.toURL())
-						.header("Content-Type", StringUtils.isNoneBlank(request.getContentType()) ?
-										request.getContentType() : "application/json")
-						//加入客户端真实ip。
-						.header("X-Real-IP", RequestHelper.getRealIp(request))
-						.header("Accept", request.getHeader("Accept")).build();
+		Request.Builder builder = new Request.Builder()
+      .url(clientUri.toURL())
+      .header("Content-Type", StringUtils.isNoneBlank(request.getContentType()) ? request.getContentType() : "application/json")
+      //加入客户端真实ip。
+      .header("X-Real-IP", RequestHelper.getRealIp(request));
+		if (StringUtils.isNoneBlank(request.getHeader("Accept"))) {
+      builder.header("Accept",request.getHeader("Accept"));
+    }
+		Request clientRequest = builder.build();
 
 		//把http头部的token重新编码发送给service
 		String token = getRequestAuthorizationToken(request, controllerClass, method);
